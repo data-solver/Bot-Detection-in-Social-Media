@@ -99,7 +99,7 @@ def tokenizer(tweet):
     """
     splits tweet into initial list of tokens
     """
-    tknzr = nltk.TweetTokenizer(preserve_case = False, strip_handles = False)
+    tknzr = nltk.TweetTokenizer(preserve_case = True, strip_handles = False)
     token_list = tknzr.tokenize(tweet)
     return token_list
 
@@ -130,25 +130,25 @@ def refine_token(token_list):
         if temp[0] == True:
             refined_token_list.append(temp[1].lower())
             refined_token_list.append('<repeatedletters>')
-            if token.isupper() == True:
+            if token.get_token().isupper() == True:
                 refined_token_list.append('<allcaps>')
             continue
         
-        if token.isupper() == True:
-            refined_token_list.append(token.lower())
+        if token.get_token().isupper() == True:
+            refined_token_list.append(token.get_token().lower())
             refined_token_list.append('<allcaps>')
             continue
         
         #check for 1 hashtag at start of token
-        if token[0] == '#':
+        if token.get_token()[0] == '#':
             refined_token_list.append('<hashtag>')
-            refined_token_list.append(token[1:])
+            refined_token_list.append(token.get_token()[1:])
             continue  
         #check for 2 hashtags at start of token (there can't be more than 2 since
         #we already dealt with such cases with is_repeated)
-        if token[0] == '#' and token [1] == '#':
+        if token.get_token()[0] == '#' and token.get_token()[1] == '#':
             refined_token_list.append('<hashtag>')
-            refined_token_list.append(token[2:])
+            refined_token_list.append(token.get_token()[2:])
             continue
         
         refined_token_list.append(token.get_token().lower())
