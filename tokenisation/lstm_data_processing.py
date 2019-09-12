@@ -21,6 +21,7 @@ make a function which takes as input a tweet (a string), and does the following:
 """
 import nltk
 import re
+from itertools import groupby
 
 
 class token_class:
@@ -70,10 +71,12 @@ class token_class:
         if it does, it returns True and the word without repeated letters
         if it does not, it returns False and the original word
         """
-        output = [None, None]
+        reduced_token = ''.join(''.join(s)[:2] for _, s in groupby(self.token))
+        if reduced_token == self.token:
+            return [False, self.token]
+        else:
+            return [True, self.token]
 
-        
-        return [None, None]
     
 #    def is_allcaps(self):
 #        """
