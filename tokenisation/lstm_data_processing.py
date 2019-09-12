@@ -75,7 +75,7 @@ class token_class:
         if reduced_token == self.token:
             return [False, self.token]
         else:
-            return [True, self.token]
+            return [True, reduced_token]
 
     
 #    def is_allcaps(self):
