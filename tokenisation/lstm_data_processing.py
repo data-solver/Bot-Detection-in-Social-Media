@@ -22,6 +22,7 @@ make a function which takes as input a tweet (a string), and does the following:
 import nltk
 import re
 from itertools import groupby
+import emoji
 
 
 class token_class:
@@ -64,10 +65,20 @@ class token_class:
     def is_emoji(self):
         """
         checks if token is an emoji
-        if it is, it returns True and the type of emoji that the token is
-        """
+        ***
+        for now the function will just return [True, '<emoji>'] if the token is 
+        an emoji, [False, None] if it is not
+        ***
         
-        return [None, None]
+        TO BE IMPLEMENTED:
+        if it is, it returns True and the type of emoji that the token is
+        else, returns False and None
+        """
+        if self.token in emoji.UNICODE_EMOJI:
+            return [True, '<emoji>']
+        else:
+            return [False, None]
+#        return [None, None]
     
     def is_repeated(self):
         """
@@ -80,15 +91,6 @@ class token_class:
             return [False, self.token]
         else:
             return [True, reduced_token]
-
-    
-#    def is_allcaps(self):
-#        """
-#        checks if token has all capital letters
-#        if it does, returns True, else False
-#        """
-#        if self.token.isupper() == True
-#        return None
     
     def get_token(self):
         return self.token
@@ -109,9 +111,6 @@ def refine_token(token_list):
     refined_token_list = []
     for token in token_list:
         token = token_class(token)
-        if token == '#':
-            refined_token_list.append('<hashtag>')
-            continue
         if token.is_url() == True:
             refined_token_list.append('<url>')
             continue
@@ -139,9 +138,21 @@ def refine_token(token_list):
             refined_token_list.append(token.lower())
             refined_token_list.append('<allcaps>')
             continue
+        
+        #check for 1 hashtag at start of token
+        if token[0] == '#':
+            refined_token_list.append('<hashtag>')
+            refined_token_list.append(token[1:])
+            continue  
+        #check for 2 hashtags at start of token (there can't be more than 2 since
+        #we already dealt with such cases with is_repeated)
+        if token[0] == '#' and token [1] == '#':
+            refined_token_list.append('<hashtag>')
+            refined_token_list.append(token[2:])
+            continue
+        
         refined_token_list.append(token.get_token().lower())
         
-        
-        
+    return refined_token_list
         
             
