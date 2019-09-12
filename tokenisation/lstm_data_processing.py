@@ -54,8 +54,12 @@ class token_class:
         """
         checks if token is a user mention
         """
-        
-        return None
+        temp = nltk.TweetTokenizer(strip_handles = True)
+        result = temp.tokenize(self.token)
+        if result == []:
+            return True
+        else:
+            return False
 
     def is_emoji(self):
         """
