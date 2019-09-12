@@ -15,7 +15,7 @@ make a function which takes as input a tweet (a string), and does the following:
         
     **** not sure about this one ***** 
     words with repeated letters converted into two tokens, e.g.:
-        "hhhhheeey" is converted into "<hey>" and "<repeatedletters>"
+        "hhhhheeey" is converted into "<hey>" and "<repeat>"
     
     all tokens converted to lower case
 """
@@ -129,7 +129,7 @@ def refine_token(token_list):
         temp = token.is_repeated()
         if temp[0] == True:
             refined_token_list.append(temp[1].lower())
-            refined_token_list.append('<repeatedletters>')
+            refined_token_list.append('<repeat>')
             if token.get_token().isupper() == True:
                 refined_token_list.append('<allcaps>')
             continue
