@@ -95,7 +95,7 @@ class token_class:
     def get_token(self):
         return self.token
 
-def tokenizer(tweet):
+def tokenizer1(tweet):
     """
     splits tweet into initial list of tokens
     """
