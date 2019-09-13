@@ -6,9 +6,18 @@ import os
 import numpy as np
 from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.preprocessing.sequence import pad_sequences
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Flatten
+from tensorflow.keras.layers import Dense
+from tensorflow.keras.layers import Embedding
+from tensorflow.keras.layers import LSTM
 
 #number of rows to test with
 n = 100
+
+#output dimension of lstm layer
+lstm_dim = 32
+
 
 #load glove embedding into a dictionary
 with open(r'C:\Users\Kumar\OneDrive - Imperial College London\Year 3\UROP\\'
@@ -23,7 +32,7 @@ for row in df['text']:
     tokenized_tweets.append(ldp.refine_token(temp))
     
 #prepare tokenizer
-tokenizer = Tokenizer(num_words = 100000, filters = '!"#$%&()*+,-./:;=?@[\\]^_`{|}~\t\n', oov_token = '<OOV>')
+tokenizer = Tokenizer(num_words = 100000, filters = '!"#$%&()*+,-./:;=?@[\\]^_`{|}~\t\n')
 tokenizer.fit_on_texts(tokenized_tweets)
 word_index = tokenizer.word_index
 
@@ -58,5 +67,15 @@ embed_mat = np.zeros((vocab_size, embedding_dim))
 for word, index in  word_index.items():
     embed_vec = embed_index.get(word)
     if embed_vec is not None:
-        embed_mat[index] = embed_vec
-        
+        embed_mat[index-1] = embed_vec  
+
+model = Sequential()   
+embed_layer = Embedding(vocab_size, embedding_dim, weights = [embed_mat],
+                        input_length = max_length, trainable = False)
+model.add(embed_layer)
+model.add(LSTM(units = lstm_dim))
+model.add(Dense(128, activation = 'relu'))
+model.add(Dense(64, activation = 'relu'))
+model.add(Dense(1, activation = 'sigmoid'))
+model.compile(loss='binary_crossentropy',optimizer='adam',metrics=['accuracy'])
+model.summary()
