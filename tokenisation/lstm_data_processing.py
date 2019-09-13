@@ -75,7 +75,7 @@ class token_class:
         else, returns False and None
         """
         if self.token in emoji.UNICODE_EMOJI:
-            return [True, '<emoji>']
+            return [True, '<neutralface>']
         else:
             return [False, None]
 #        return [None, None]
