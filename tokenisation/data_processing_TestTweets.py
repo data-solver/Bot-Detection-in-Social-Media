@@ -13,6 +13,6 @@ list_of_tests = [test1,test2,test3]
 result = []
 
 for test in list_of_tests:
-    token_list = ldp.tokenizer(test)
+    token_list = ldp.tokenizer1(test)
     refined_token_list = ldp.refine_token(token_list)
     result.append(refined_token_list)
