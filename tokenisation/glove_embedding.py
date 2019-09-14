@@ -24,6 +24,18 @@ n = 1000
 lstm_dim = 32
 
 
+"""
+auxilliary inputs are:
+    retweet count
+    reply count
+    favourite count
+    number of hashtags
+    number of urls
+    number of mentions
+"""
+
+
+
 #store our tweets in a list
 tokenized_tweets = []
 
@@ -35,6 +47,10 @@ with open(r'C:\Users\Kumar\OneDrive - Imperial College London\Year 3\UROP\\'
           encoding = 'Latin-1') as f:
     df = pd.read_csv(f)
     df = df.head(n)
+    
+    auxilliary_input = df[['reply_count', 'retweet_count',
+                              'favorite_count', 'num_hashtags',
+                              'num_urls', 'num_mentions']].copy()
 
 for row in df['text']:
     temp = ldp.tokenizer1(row)
@@ -48,6 +64,11 @@ with open(r'C:\Users\Kumar\OneDrive - Imperial College London\Year 3\UROP\\'
     df = pd.read_csv(f)
     df = df.head(n)
 
+    auxilliary_input = auxilliary_input.append  \
+                                (df[['reply_count', 'retweet_count',
+                                'favorite_count', 'num_hashtags',
+                                'num_urls', 'num_mentions']])
+
 for row in df['text']:
     temp = ldp.tokenizer1(row)
     tokenized_tweets.append(ldp.refine_token(temp))
@@ -59,6 +80,11 @@ with open(r'C:\Users\Kumar\OneDrive - Imperial College London\Year 3\UROP\\'
           encoding = 'Latin-1') as f:
     df = pd.read_csv(f)
     df = df.head(n)
+    
+    auxilliary_input = auxilliary_input.append  \
+                                (df[['reply_count', 'retweet_count',
+                                'favorite_count', 'num_hashtags',
+                                'num_urls', 'num_mentions']])  
 
 for row in df['text']:
     temp = ldp.tokenizer1(row)
@@ -71,6 +97,11 @@ with open(r'C:\Users\Kumar\OneDrive - Imperial College London\Year 3\UROP\\'
           encoding = 'Latin-1') as f:
     df = pd.read_csv(f)
     df = df.head(3*n)
+    
+    auxilliary_input = auxilliary_input.append  \
+                                (df[['reply_count', 'retweet_count',
+                                'favorite_count', 'num_hashtags',
+                                'num_urls', 'num_mentions']])   
 
 for row in df['text']:
     temp = ldp.tokenizer1(row)
@@ -82,12 +113,19 @@ for row in df['text']:
 labels = np.zeros(6*n)
 labels[:3*n] = 1
 
+
+#split tweets into training/validation
 x_train, x_test, y_train, y_test = train_test_split(tokenized_tweets, 
                                                     labels,
                                                     test_size = 0.3,
                                                     random_state = 4)
-
-
+#split auxilliary input into training/validation
+x_aux_train, x_aux_test, y_aux_train, y_aux_test = \
+                                    train_test_split(auxilliary_input,
+                                                     labels,
+                                                     test_size = 0.3,
+                                                     random_state = 4)
+                                                     
 
 #prepare tokenizer
 tokenizer = Tokenizer(num_words = 100000, filters = '!"#$%&()*+,-./:;=?@[\\]^_`{|}~\t\n')
