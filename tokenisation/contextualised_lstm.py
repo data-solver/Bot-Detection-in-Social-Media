@@ -18,7 +18,7 @@ from sklearn.model_selection import train_test_split
 
 #number of rows to test with (delete when working with full data,
 #and remove df.head(n) from the below segments of code)
-n = 1000
+n = 100000
 
 #output dimension of lstm layer
 lstm_dim = 32
@@ -43,10 +43,9 @@ tokenized_tweets = []
 num_dropped = [0,0,0,0]
 #bot tweets
 #social spambot 1
-with open(r'C:\Users\Kumar\OneDrive - Imperial College London\Year 3\UROP\\'
-          r'Dataset\cresci-2017.csv\datasets_full.csv\social_spambots_1.csv'
-          r'\tweets.csv',
-          encoding = 'Latin-1') as f:
+temp_dir = ("C:/Users/Kumar/OneDrive - Imperial College London/Year 3/UROP/"
+          "Dataset/cresci-2017.csv/datasets_full.csv/social_spambots_1.csv")
+with open(os.path.join(temp_dir, 'tweets.csv'),encoding = 'Latin-1') as f:
     df = pd.read_csv(f)
     df = df.head(n)
     
@@ -63,10 +62,9 @@ for row in df['text']:
     tokenized_tweets.append(ldp.refine_token(temp))
 
 #social spambot 2
-with open(r'C:\Users\Kumar\OneDrive - Imperial College London\Year 3\UROP\\'
-          r'Dataset\cresci-2017.csv\datasets_full.csv\social_spambots_2.csv'
-          r'\tweets.csv',
-          encoding = 'Latin-1') as f:
+temp_dir = ("C:/Users/Kumar/OneDrive - Imperial College London/Year 3/UROP/"
+          "Dataset/cresci-2017.csv/datasets_full.csv/social_spambots_2.csv")
+with open(os.path.join(temp_dir, 'tweets.csv'),encoding = 'Latin-1') as f:
     df = pd.read_csv(f)
     df = df.head(n)
     df = df.dropna(subset = ['text'])
@@ -82,10 +80,9 @@ for row in df['text']:
     tokenized_tweets.append(ldp.refine_token(temp))
 
 #social spambot 3
-with open(r'C:\Users\Kumar\OneDrive - Imperial College London\Year 3\UROP\\'
-          r'Dataset\cresci-2017.csv\datasets_full.csv\social_spambots_3.csv'
-          r'\tweets.csv',
-          encoding = 'Latin-1') as f:
+temp_dir = ("C:/Users/Kumar/OneDrive - Imperial College London/Year 3/UROP/"
+          "Dataset/cresci-2017.csv/datasets_full.csv/social_spambots_3.csv")
+with open(os.path.join(temp_dir, 'tweets.csv'),encoding = 'Latin-1') as f:
     df = pd.read_csv(f)
     df = df.head(n)
     df = df.dropna(subset = ['text'])   
@@ -101,10 +98,9 @@ for row in df['text']:
     tokenized_tweets.append(ldp.refine_token(temp))
     
 #human tweets
-with open(r'C:\Users\Kumar\OneDrive - Imperial College London\Year 3\UROP\\'
-          r'Dataset\cresci-2017.csv\datasets_full.csv\genuine_accounts.csv'
-          r'\tweets.csv',
-          encoding = 'Latin-1') as f:
+temp_dir = ("C:/Users/Kumar/OneDrive - Imperial College London/Year 3/UROP/"
+          "Dataset/cresci-2017.csv/datasets_full.csv/genuine_accounts.csv")
+with open(os.path.join(temp_dir, 'tweets.csv'),encoding = 'Latin-1') as f:
     df = pd.read_csv(f)
     df = df.head(3*n)
     df = df.dropna(subset = ['text'])
