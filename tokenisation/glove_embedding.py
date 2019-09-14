@@ -22,7 +22,7 @@ import matplotlib.pyplot as plt
 
 #number of rows to test with (delete when working with full data,
 #and remove df.head(n) from the below segments of code)
-n = 1000
+n = 10000
 
 #output dimension of lstm layer
 lstm_dim = 32
@@ -43,6 +43,8 @@ auxilliary inputs are:
 #store our tweets in a list
 tokenized_tweets = []
 
+
+num_dropped = [0,0,0,0]
 #bot tweets
 #social spambot 1
 with open(r'C:\Users\Kumar\OneDrive - Imperial College London\Year 3\UROP\\'
@@ -51,6 +53,10 @@ with open(r'C:\Users\Kumar\OneDrive - Imperial College London\Year 3\UROP\\'
           encoding = 'Latin-1') as f:
     df = pd.read_csv(f)
     df = df.head(n)
+    
+    #drop any rows which have a NaN entry in the text column
+    df = df.dropna(subset = ['text'])
+    num_dropped[0] = n - len(df)
     
     auxilliary_input = df[['reply_count', 'retweet_count',
                               'favorite_count', 'num_hashtags',
@@ -67,6 +73,8 @@ with open(r'C:\Users\Kumar\OneDrive - Imperial College London\Year 3\UROP\\'
           encoding = 'Latin-1') as f:
     df = pd.read_csv(f)
     df = df.head(n)
+    df = df.dropna(subset = ['text'])
+    num_dropped[1] = n - len(df)
 
     auxilliary_input = auxilliary_input.append  \
                                 (df[['reply_count', 'retweet_count',
@@ -84,6 +92,8 @@ with open(r'C:\Users\Kumar\OneDrive - Imperial College London\Year 3\UROP\\'
           encoding = 'Latin-1') as f:
     df = pd.read_csv(f)
     df = df.head(n)
+    df = df.dropna(subset = ['text'])   
+    num_dropped[2] = n - len(df)
     
     auxilliary_input = auxilliary_input.append  \
                                 (df[['reply_count', 'retweet_count',
@@ -101,6 +111,8 @@ with open(r'C:\Users\Kumar\OneDrive - Imperial College London\Year 3\UROP\\'
           encoding = 'Latin-1') as f:
     df = pd.read_csv(f)
     df = df.head(3*n)
+    df = df.dropna(subset = ['text'])
+    num_dropped[3] = 3*n - len(df)
     
     auxilliary_input = auxilliary_input.append  \
                                 (df[['reply_count', 'retweet_count',
@@ -114,8 +126,8 @@ for row in df['text']:
 #create labels - we have set it up so that the first half of our list of 
 #tokenized tweets are bots, and the second half is human - when working with 
 #full dataset, this will not be the case
-labels = np.zeros(6*n)
-labels[:3*n] = 1
+labels = np.zeros(6*n - sum(num_dropped))
+labels[:3*n- sum(num_dropped[:-1])] = 1
 
 
 #split tweets into training/validation
