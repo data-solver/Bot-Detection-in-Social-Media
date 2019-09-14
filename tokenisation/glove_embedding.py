@@ -11,6 +11,10 @@ from tensorflow.keras.layers import Flatten
 from tensorflow.keras.layers import Dense
 from tensorflow.keras.layers import Embedding
 from tensorflow.keras.layers import LSTM
+from tensorflow.keras.layers import Input
+from tensorflow.keras import backend as K
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import concatenate
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 
@@ -119,7 +123,7 @@ x_train, x_test, y_train, y_test = train_test_split(tokenized_tweets,
                                                     labels,
                                                     test_size = 0.3,
                                                     random_state = 4)
-#split auxilliary input into training/validation
+
 x_aux_train, x_aux_test, y_aux_train, y_aux_test = \
                                     train_test_split(auxilliary_input,
                                                      labels,
@@ -174,12 +178,55 @@ for word, index in  word_index.items():
     if embed_vec is not None:
         embed_mat[index-1] = embed_vec  
 
+
+
+#functional API keras implementation of neural network
+embed_layer = Embedding(vocab_size, embedding_dim, weights = [embed_mat],
+                        input_length = max_length, trainable = False)(padded_tweets)
+lstm_layer = LSTM(units = lstm_dim)(embed_layer)
+
+#auxilliary output
+auxilliary_output = Dense(1, activation='sigmoid', name='aux_output')(lstm_layer)
+
+#auxilliary input
+input_shape = x_aux_train.shape
+aux_input_layer = Input( input_shape, name = 'aux_input')
+
+#concatenate auxilliary input and lstm output
+x = concatenate([lstm_layer, aux_input_layer])
+
+#pass this through deep neural network
+x = Dense(128, activation = 'relu')(x)
+x = Dense(64, activation = 'relu')(x)
+main_output = Dense(1, activation = 'sigmoid')(x)
+
+model = Model(inputs = [embed_layer, aux_input_layer], outputs = [main_output,
+              auxilliary_output])
+model.compile(loss='binary_crossentropy',optimizer='rmsprop',
+              metrics=['accuracy'], loss_weights = [0.8, 0.2])
+model.summary()
+
+num_epochs = 20
+history = model.fit(padded_tweets, y_train, epochs=num_epochs, 
+                    validation_data=(testing_padded, y_test))
+
+
 #implement deep neural network with glove embedding and lstm layer
 model = Sequential()   
 embed_layer = Embedding(vocab_size, embedding_dim, weights = [embed_mat],
                         input_length = max_length, trainable = False)
 model.add(embed_layer)
 model.add(LSTM(units = lstm_dim))
+
+#extract output from lstm layer
+get_lstm_layer_output = K.function([model.layers[0].input],
+                                  [model.layers[1].output])
+layer_output = get_lstm_layer_output([padded_tweets])[0]
+
+
+#concatenate lstm output with auxilliary input
+
+model.add(Flatten())
 model.add(Dense(128, activation = 'relu'))
 model.add(Dense(64, activation = 'relu'))
 model.add(Dense(1, activation = 'sigmoid'))
