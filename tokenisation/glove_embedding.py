@@ -261,8 +261,14 @@ plot_graphs(history, 'main_output_loss')
 
 
 
+
 """
 old sequential implementation
+=======
+
+
+
+>>>>>>> 62dc9e0572b8bee63ad442f5d2c772bfcaab2ced
 
 history = model.fit(padded_tweets, y_train, epochs=num_epochs, 
                     validation_data=(testing_padded, y_test))
