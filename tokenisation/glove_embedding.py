@@ -181,36 +181,74 @@ for word, index in  word_index.items():
 
 
 #functional API keras implementation of neural network
+main_input = Input(shape = (max_length,), dtype = 'int32', name = 'main_input')
 embed_layer = Embedding(vocab_size, embedding_dim, weights = [embed_mat],
-                        input_length = max_length, trainable = False)(padded_tweets)
+                        input_length = max_length, trainable = False)(main_input)
 lstm_layer = LSTM(units = lstm_dim)(embed_layer)
 
 #auxilliary output
 auxilliary_output = Dense(1, activation='sigmoid', name='aux_output')(lstm_layer)
 
 #auxilliary input
-input_shape = x_aux_train.shape
-aux_input_layer = Input( input_shape, name = 'aux_input')
+input_shape = x_aux_train.shape[1]
+aux_input = Input( (input_shape,), name = 'aux_input')
 
 #concatenate auxilliary input and lstm output
-x = concatenate([lstm_layer, aux_input_layer])
+x = concatenate([lstm_layer, aux_input])
 
 #pass this through deep neural network
 x = Dense(128, activation = 'relu')(x)
 x = Dense(64, activation = 'relu')(x)
-main_output = Dense(1, activation = 'sigmoid')(x)
+main_output = Dense(1, activation = 'sigmoid', name = 'main_output')(x)
 
-model = Model(inputs = [embed_layer, aux_input_layer], outputs = [main_output,
+model = Model(inputs = [main_input, aux_input], outputs = [main_output,
               auxilliary_output])
 model.compile(loss='binary_crossentropy',optimizer='rmsprop',
               metrics=['accuracy'], loss_weights = [0.8, 0.2])
 model.summary()
 
 num_epochs = 20
+batch_size = 32
+
+#all data inputted here must be arrays, not dataframes
+model.fit({'main_input': padded_tweets, 'aux_input': np.asarray(x_aux_train)},
+          {'main_output': y_train, 'aux_output': y_aux_train},
+          epochs = num_epochs)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 history = model.fit(padded_tweets, y_train, epochs=num_epochs, 
                     validation_data=(testing_padded, y_test))
-
-
 #implement deep neural network with glove embedding and lstm layer
 model = Sequential()   
 embed_layer = Embedding(vocab_size, embedding_dim, weights = [embed_mat],
