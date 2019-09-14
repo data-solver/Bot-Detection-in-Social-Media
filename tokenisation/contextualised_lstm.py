@@ -4,25 +4,21 @@ import pandas as pd
 import lstm_data_processing as ldp
 import os
 import numpy as np
+import matplotlib.pyplot as plt
 from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.preprocessing.sequence import pad_sequences
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Flatten
-from tensorflow.keras.layers import Dense
-from tensorflow.keras.layers import Embedding
-from tensorflow.keras.layers import LSTM
-from tensorflow.keras.layers import Input
+from tensorflow.keras.layers import Flatten, Dense, Embedding, LSTM, Input, \
+                                    concatenate
 from tensorflow.keras import backend as K
-from tensorflow.keras.models import Model
-from tensorflow.keras.layers import concatenate
+from tensorflow.keras.models import Model, Sequential
 from sklearn.model_selection import train_test_split
-import matplotlib.pyplot as plt
+
 
 
 
 #number of rows to test with (delete when working with full data,
 #and remove df.head(n) from the below segments of code)
-n = 10000
+n = 1000
 
 #output dimension of lstm layer
 lstm_dim = 32
@@ -156,7 +152,7 @@ sequences = tokenizer.texts_to_sequences(x_train)
 
 #pad sequences so that they are all same length
 max_length = len(max(sequences))
-padded_tweets = pad_sequences(sequences,
+x_train = pad_sequences(sequences,
                               maxlen = max_length,
                               dtype = 'int32',
                               padding = 'post'
@@ -165,7 +161,7 @@ padded_tweets = pad_sequences(sequences,
 #do the same for validation data
 
 testing_sequences = tokenizer.texts_to_sequences(x_test)
-testing_padded = pad_sequences(testing_sequences,
+x_test = pad_sequences(testing_sequences,
                                maxlen=max_length,
                                dtype = 'int32',
                                padding = 'post'
@@ -173,7 +169,6 @@ testing_padded = pad_sequences(testing_sequences,
 
 #load glove embedding into a dictionary
 embedding_dim = 50
-vocab_length = 50000
 embed_index = {}
 GLOVE_DIR = r"C:\Users\Kumar\OneDrive - Imperial College London\Year 3\UROP\glove.twitter.27B"
 with open(os.path.join(GLOVE_DIR, 'glove.twitter.27B.50d.txt'), encoding = "UTF-8") as f:
@@ -223,9 +218,9 @@ num_epochs = 20
 batch_size = 32
 
 #all data inputted here must be arrays, not dataframes
-history = model.fit({'main_input': padded_tweets, 'aux_input': np.asarray(x_aux_train)},
+history = model.fit({'main_input': x_train, 'aux_input': np.asarray(x_aux_train)},
           {'main_output': y_train, 'aux_output': y_aux_train},
-          validation_data = ({'main_input': testing_padded, 
+          validation_data = ({'main_input': x_test, 
                               'aux_input': np.asarray(x_aux_test)},
                               {'main_output': y_test,
                               'aux_output': y_aux_test}),
@@ -282,8 +277,8 @@ old sequential implementation
 
 >>>>>>> 62dc9e0572b8bee63ad442f5d2c772bfcaab2ced
 
-history = model.fit(padded_tweets, y_train, epochs=num_epochs, 
-                    validation_data=(testing_padded, y_test))
+history = model.fit(x_train, y_train, epochs=num_epochs, 
+                    validation_data=(x_test, y_test))
 #implement deep neural network with glove embedding and lstm layer
 model = Sequential()   
 embed_layer = Embedding(vocab_size, embedding_dim, weights = [embed_mat],
@@ -294,7 +289,7 @@ model.add(LSTM(units = lstm_dim))
 #extract output from lstm layer
 get_lstm_layer_output = K.function([model.layers[0].input],
                                   [model.layers[1].output])
-layer_output = get_lstm_layer_output([padded_tweets])[0]
+layer_output = get_lstm_layer_output([x_train])[0]
 
 
 #concatenate lstm output with auxilliary input
@@ -307,5 +302,5 @@ model.compile(loss='binary_crossentropy',optimizer='adam',metrics=['accuracy'])
 model.summary()
 
 num_epochs = 20
-history = model.fit(padded_tweets, y_train, epochs=num_epochs, validation_data=(testing_padded, y_test))
+history = model.fit(x_train, y_train, epochs=num_epochs, validation_data=(x_test, y_test))
 """
