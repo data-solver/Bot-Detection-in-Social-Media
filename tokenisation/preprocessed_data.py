@@ -44,7 +44,7 @@ import csv
 
 global max_length
 max_length = 0
-def toToken(counter = [1,1], current_data = [3], break_outer = [0], t_path = [0], t_fn = [0]):
+def toToken(counter = [1,1], current_data = [0], break_outer = [0]):
     parent_dir = ("C:/Users/Kumar/OneDrive - Imperial College London/Year 3/UROP/"
                   "Dataset/cresci-2017.csv/datasets_full.csv/")
     #list of directories: ss1, ss2, ss3, genuine accounts
@@ -59,41 +59,37 @@ def toToken(counter = [1,1], current_data = [3], break_outer = [0], t_path = [0]
             break
         path = os.path.join(parent_dir, data_dir[current_data[0]])
         with open(path, encoding = "Latin-1") as csvfile:
+            #remove NA entries
             datareader = csv.reader(x.replace('\0', '') for x in csvfile)
             row = next(datareader)        
             while True:
-
                 try:
-    #                start = time.time()
-                    ############################ this line is causing the bottleneck
                     try:
+                        #next row in dataset
                         row = next(datareader)
+                    #in case for some reason any null bytes remain
                     except csv.Error:
                         print("null byte", counter[0])
                         print(row)
                         continue
-    #                end = time.time()
-    #                t_path[0] += end-start
-                    
-    #                if row.isna()['text'][0] == True:
-    #                    counter[0] += 1
-    #                    continue
+                #if we have reached the end of the file, move on to next file
                 except StopIteration:
                     current_data[0] += 1
                     counter[0] = 1
                     counter[1] = 1
                     print("finished file", current_data[0])
                     break
+                    #if we are at the last file, break
                     if current_data[0] > 3:
                         print("all files finished")
                         break_outer[0] = 1
                         break
-    #            start = time.time()
                 try:
                     temp = ldp.tokenizer1(row[1])
                 except TypeError:
                     print("TypeError", row[1])
                     continue
+                #if we are at the last file, break
                 except IndexError:
                     print("****Index Error*****")
                     print(row)
@@ -101,19 +97,17 @@ def toToken(counter = [1,1], current_data = [3], break_outer = [0], t_path = [0]
                     print("all files finished")
                     break
                 tokenized_tweet = ldp.refine_token(temp)
-    #            end = time.time()
-    #            t_fn[0] += end-start
-                
-                
-                #store the maximum length
+
+                #store the maximum length of tokens
                 global max_length
                 if len(tokenized_tweet) > max_length:
                     max_length = len(tokenized_tweet)
+#                    print("max_length",max_length, tokenized_tweet)
                 counter[0] += 1
+                
+                #report progress
                 if counter[0] // 10000 == counter[1]:
                     print(counter[1], "lots of 10000 entries done")
-    #                print(t_path[0], "time taken for path")
-    #                print(t_fn[0], "time taken for lstm_data functions")
                     counter[1] += 1
                 yield tokenized_tweet
 
@@ -124,4 +118,103 @@ tokenizer.fit_on_texts(tokenGen)
 #save the tokenizer to disk so we don't need to recompute
 with open('tokenizer.pickle', 'wb') as handle:
     pickle.dump(tokenizer, handle, protocol = pickle.HIGHEST_PROTOCOL)
+    
+def toPadded(tokenizer, counter = [1,1], current_data = [0], break_outer = [0]):
+    parent_dir = ("C:/Users/Kumar/OneDrive - Imperial College London/Year 3/UROP/"
+                  "Dataset/cresci-2017.csv/datasets_full.csv/")
+    #list of directories: ss1, ss2, ss3, genuine accounts
+    data_dir = []
+    data_dir.append('social_spambots_1.csv/tweets.csv')
+    data_dir.append('social_spambots_2.csv/tweets.csv')
+    data_dir.append('social_spambots_3.csv/tweets.csv')
+    data_dir.append('genuine_accounts.csv/tweets.csv')
+    while True:
+        if break_outer[0] == 1:
+            print("done")
+            break
+        path = os.path.join(parent_dir, data_dir[current_data[0]])
+        with open(path, encoding = "Latin-1") as csvfile:
+            #remove NA entries
+            datareader = csv.reader(x.replace('\0', '') for x in csvfile)
+            row = next(datareader)        
+            while True:
+                try:
+                    try:
+                        #next row in dataset
+                        row = next(datareader)
+                   #in case for some reason any null bytes remain
+                    except csv.Error:
+                        print("null byte", counter[0])
+                        print(row)
+                        continue
+                #if we have reached the end of the file, move on to next file
+                except StopIteration:
+                    current_data[0] += 1
+                    counter[0] = 1
+                    counter[1] = 1
+                    print("finished file", current_data[0])
+                    break
+                    #if we are at the last file, break
+                    if current_data[0] > 3:
+                        print("all files finished")
+                        break_outer[0] = 1
+                        break
+                try:
+                    sequence = tokenizer.texts_to_sequences(row[1])
+                except TypeError:
+                    print("TypeError", row[1])
+                    continue
+                #if we are at the last file, break
+                except IndexError:
+                    print("****Index Error*****")
+                    print(row)
+                    break_outer[0] = 1
+                    print("all files finished")
+                    break
+                temp = pad_sequences(sequence,
+                                          maxlen = max_length,
+                                          dtype = 'int32',
+                                          padding = 'post'
+                                          )    
+                sequence_padded = []
+                for element in temp:
+                    try:
+                        sequence_padded.append(element[0])
+                    except IndexError:
+                        continue
+                    
+                #if we are in the first 3 files, the tweet is from a bot
+                if current_data[0] != 3:
+                    label = 1
+                #retweet_count, reply_count, favorite_count, num_hashtags, 
+                #num_urls, num_mentions
+                aux_input = [row[12], row[13], row[14], row[18], row[19], row[20]]
+                
+                #output has the form:
+                #   padded_tweet, retweet_count, reply_count, favorite_count
+                #   num_hashtags, num_urls, num_mentions, label 
+                output = [sequence_padded] + aux_input + [label]
+                
+                counter[0] += 1
+                
+                #report progress
+                if counter[0] // 10000 == counter[1]:
+                    print(counter[1], "lots of 10000 entries done")
+                    counter[1] += 1
+                
+                yield output
+
+#write processed data to disk  
+with open('processed_data.csv', 'w') as csvfile:
+    writer = csv.writer(csvfile)
+    genPadded = toPadded(tokenizer)
+    #write the header
+    header = ['padded_tweet', 'retweet_count', 'reply_count', 'favorite_count',
+              'num_hashtags', 'num_urls', 'num_mentions', 'label']
+    writer.writerow(header)
+    while True:
+        writer.writerow(next(genPadded))
+        
+
+    
     
