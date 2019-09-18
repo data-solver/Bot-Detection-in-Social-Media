@@ -174,15 +174,9 @@ def toPadded(tokenizer, counter = [1,1], current_data = [0], break_outer = [0]):
                                           maxlen = max_length,
                                           dtype = 'int32',
                                           padding = 'post'
-                                          )[0]   
-#                yield sequence
-#                sequence_padded = []
-#                for element in temp:
-#                    try:
-#                        sequence_padded.append(element[0])
-#                    except IndexError:
-#                        sequence_padded.append(element)
-#                        continue
+                                          )[0]  
+                #change sequence_padded to a list
+                sequence_padded = sequence_padded.tolist()
                     
                 #if we are in the first 3 files, the tweet is from a bot
                 if current_data[0] != 3:
@@ -205,12 +199,13 @@ def toPadded(tokenizer, counter = [1,1], current_data = [0], break_outer = [0]):
                 
                 yield output
 
-#write processed data to disk              
+#load tokenizer             
 parent_dir = ("C:/Users/Kumar/OneDrive - Imperial College London/"
               "Github repositories/Bot-Detection-in-Social-Media/tokenisation")
 with open(os.path.join(parent_dir,'tokenizer.pickle'), 'rb') as handle:
     tokenizer = pickle.load(handle)
 
+#write processed data to disk
 parent_dir = ("C:/Users/Kumar/OneDrive - Imperial College London/Year 3/UROP"
               "/Dataset")
 with open(os.path.join(parent_dir,'processed_data.csv'), 'w', newline = '') as csvfile:
@@ -229,12 +224,9 @@ with open(os.path.join(parent_dir,'processed_data.csv'), 'r') as csvfile:
     row_count = sum(1 for row in csvreader)
         
     
-##shuffle the rows of this csv file
-#indices_list = np.arange(1,row_count-1)
-#indices_shuffled = np.random.choice(indices_list, size = len(indices_list),
-#                                                             replace = False)
+##shuffle the rows of this processed_data and write the shuffled version to a new file
 with open(os.path.join(parent_dir,'processed_data.csv'), 'r') as r, \
-    open(os.path.join(parent_dir, 'shuffled_processed_data.csv'), 'w') as w:
+    open(os.path.join(parent_dir, 'shuffled_processed_data.csv'), 'w', newline = '') as w:
         writer = csv.writer(w)
         #write the header
         header = ['padded_tweet', 'retweet_count', 'reply_count', 'favorite_count',
@@ -251,23 +243,6 @@ with open(os.path.join(parent_dir,'processed_data.csv'), 'r') as r, \
         for element in indices_shuffled:
             writer.writerow(df.iloc[element,:])
             
-"""
-with open(os.path.join(parent_dir, 'shuffled_processed_data.csv'), 'r') as w:
-    ...:     csvreader = csv.reader(w)
-    ...:     for i in range(10):
-    ...:         print(next(csvreader))
-"""
-
-
-"""
-count number of lines in unshuffled data - n
-create a 1d array [1,...,n]
-use np.random.choice to generate a number from this list without replacement
-use that number to index a row from the unshuffled data and write this row
-to the shuffled_data csv file
-
-repeat till 1d array is empty
-"""
 
     
     
