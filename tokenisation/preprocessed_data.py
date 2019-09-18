@@ -181,6 +181,9 @@ def toPadded(tokenizer, counter = [1,1], current_data = [0], break_outer = [0]):
                 #if we are in the first 3 files, the tweet is from a bot
                 if current_data[0] != 3:
                     label = 1
+                #tweets from the last file are from humans
+                elif current_data[0] == 3:
+                    label = 0
                 #retweet_count, reply_count, favorite_count, num_hashtags, 
                 #num_urls, num_mentions
                 aux_input = [row[12], row[13], row[14], row[18], row[19], row[20]]
@@ -219,7 +222,7 @@ with open(os.path.join(parent_dir,'processed_data.csv'), 'w', newline = '') as c
         writer.writerow(next(genPadded))
 
 #count rows in processed_data.csv
-with open(os.path.join(parent_dir,'processed_data.csv'), 'r') as csvfile:
+with open(os.path.join(parent_dir,'shuffled_processed_data.csv'), 'r') as csvfile:
     csvreader = csv.reader(csvfile)
     row_count = sum(1 for row in csvreader)
         
@@ -233,7 +236,7 @@ with open(os.path.join(parent_dir,'processed_data.csv'), 'r') as r, \
                   'num_hashtags', 'num_urls', 'num_mentions', 'label'] 
         writer.writerow(header)
         #load processed_data into dataframe (its small enough to fit in RAM)
-        df = pd.read_csv(r)
+        df = pd.read_csv(r).to_numpy()
         #shuffle the rows of this csv file
         size = len(df)
         indices_list = np.arange(1,size)
@@ -241,7 +244,8 @@ with open(os.path.join(parent_dir,'processed_data.csv'), 'r') as r, \
                                             size = len(indices_list), 
                                                        replace = False)
         for element in indices_shuffled:
-            writer.writerow(df.iloc[element,:])
+            writer.writerow(df[element])
+#            writer.writerow(df.iloc[element,:])
             
 
     

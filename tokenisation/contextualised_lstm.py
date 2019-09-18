@@ -7,6 +7,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import math
 import pickle
+import csv
+import time
 from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from tensorflow.keras.layers import Flatten, Dense, Embedding, LSTM, Input, \
@@ -37,29 +39,6 @@ auxilliary inputs are:
     number of mentions
 """
 
-"""
-problem:
-    generate data in batches from csv file
-    we have unbalanced classes, so need chuck_size to contain the correct proportion
-    make a function which generates chunks of rows from each file
-    append the result from each file to an array which contains the current chunk
-    drop NA rows - may need to then yield more rows to compensate 
-    
-    define another function which yields the padded tweets and labels for training
-    
-    define another function which yields the padded tweets and labels for validation
-    
-    
-    **to do : calculate the correct proportion for chunk_size
-    8,377,522 genuine tweets
-    3,457,344 bot tweets
-    
-    let's tentatively set chunk_size = 100,000
-    
-    defining function
-    
-
-"""
 #load glove embedding into a dictionary
 embedding_dim = 50
 embed_index = {}
@@ -86,132 +65,60 @@ with open(os.path.join(parent_dir,'tokenizer.pickle'), 'rb') as handle:
 
 class myModel:
     
-    def __init__(self, embed_mat, max_length = 50):
+    def __init__(self, embed_mat, max_length = 200):
         self.max_length = max_length
         self.vocab_size = embed_mat.shape[0]
         tweet_nos = [1610176, 428542, 1418626, 8377522]
         self.total = sum(tweet_nos)
+        self.embed_mat = embed_mat
         
         pass
     #function to generate chunks of data from csv
-    def genData(self, chunk_size, train_data = True, valid_data = False, counter = [0],
-                train_valid_ratio = 0.8):
+    def genData(self, counter = [0], batch_size = 32, rows = 6296494):
         """
         Generator function passed to keras.fit_generator to train in chunks
-        chunk_size - size of data yielded from csv file
-        train_data - if True, yield training data
-        valid_data - if True, yield validation data
-        train_valid_ratio - ratio of training data to validation data
+        batch_size - size of data yielded from csv file
+        rows - number of rows in file we are generating data from
+        counter - keep track of how far into the file we are
         """
-        
-        #proportions of tweets from spambot 1/spambot 2/spambot 3/genuine
-        tweet_nos = [1610176, 428542, 1418626, 8377522]
-        self.chunk_size = chunk_size
-        
-        proportions = [0,0,0,0]
-        
-        for index, num in enumerate(tweet_nos):
-            proportions[index] = int((num / self.total) * chunk_size)
-        
-        #correct errors due to rounding
-        total = sum(proportions)
-        if total > chunk_size:
-            proportions[0] -= total - chunk_size
-        if total < chunk_size:
-            proportions[0] += chunk_size - total
-        while True:
-            #social spambot 1
-            temp_dir = ("C:/Users/Kumar/OneDrive - Imperial College London/Year 3/UROP/"
-                  "Dataset/cresci-2017.csv/datasets_full.csv/")
-            df = pd.read_csv(os.path.join(temp_dir, 'social_spambots_1.csv/tweets.csv'), 
-                              encoding = 'Latin-1', nrows = proportions[0],
-                              skiprows = range(1,proportions[0] * counter[0]))
-            #social spambot 2
-            df = df.append(pd.read_csv(os.path.join(temp_dir, 'social_spambots_2.csv/tweets.csv'), 
-                              encoding = 'Latin-1', nrows = proportions[1],
-                              skiprows = range(1,proportions[1] * counter[0])))
-                                                                            
-                            
-            #social spambot 3
-            df = df.append(pd.read_csv(os.path.join(temp_dir, 'social_spambots_3.csv/tweets.csv'), 
-                              encoding = 'Latin-1', nrows = proportions[2],
-                              skiprows = range(1,proportions[2] * counter[0])))
-            df = df.dropna(subset = ['text'])
-            bots_in_chunk = len(df)
-            #genuine tweets
-            df = df.append(pd.read_csv(os.path.join(temp_dir, 'genuine_accounts.csv/tweets.csv'),
-                              encoding = 'Latin-1', nrows = proportions[3],
-                              skiprows = range(1,proportions[3] * counter[0])))
-            
-            #drop any rows with have a NaN entry in text column
-            df = df.dropna(subset = ['text'])
+        self.batch_size = 32
+        parent_dir = ("C:/Users/Kumar/OneDrive - Imperial College London/Year 3/UROP"
+              "/Dataset")
+        with open(os.path.join(parent_dir, 'shuffled_processed_data.csv'), 'r') as r:
+            reader = csv.reader(r)
+            #skip header
+            next(reader)
+            while True:
+                x_list = []
+                x_aux_list = []
+                y_list = []
+                for i in range(self.batch_size):
+                    row = next(reader)
+                    #use eval since list will be inside of string
+                    x_list.append(eval(row[0]))
+                    
+                    x_aux_list.append(row[1:7])
+                    
+                    y_list.append(row[7])
+                x = np.array(x_list)
+                x_aux = np.array(x_aux_list)
+                y = np.array(y_list)
+                counter[0] += self.batch_size
+                if counter[0] > rows:
+                    counter[0] = 0
+                yield ({'main_input': x, 'aux_input': x_aux},
+                {'main_output': y, 'aux_output': y})
     
-            #auxilliary input
-            auxilliary_input = df[['reply_count', 'retweet_count',
-                                  'favorite_count', 'num_hashtags',
-                                  'num_urls', 'num_mentions']].copy()
-            #tokenize the tweets
-            tokenized_tweets = []
-            for row in df['text']:
-                temp = ldp.tokenizer1(row)
-                tokenized_tweets.append(ldp.refine_token(temp))
-            #labels
-            labels = np.zeros(len(df))
-            labels[:bots_in_chunk] = 1
-            
-            #split tweets into training/validation
-            self.x_train, self.x_test, self.y_train, self.y_test = train_test_split(tokenized_tweets, 
-                                                                labels,
-                                                                test_size = 0.3,
-                                                                random_state = 4)
-            
-            self.x_aux_train, self.x_aux_test, self.y_aux_train, self.y_aux_test = \
-                                                train_test_split(auxilliary_input,
-                                                                 labels,
-                                                                 test_size = 0.3,
-                                                                 random_state = 4)
-            #prepare tokenizer
-            tokenizer = Tokenizer(num_words = 100000, filters = '!"#$%&()*+,-./:;=?@[\\]^_`{|}~\t\n')
-            tokenizer.fit_on_texts(self.x_train)
-            self.word_index = tokenizer.word_index
-            
-            #vocab size + 1 for the out of vocab token
-#            self.vocab_size = len(self.word_index) + 1
-            
-            #transform our tweets into their integer representation
-            sequences = tokenizer.texts_to_sequences(self.x_train)
-            
-            #pad sequences so that they are all same length
-#            self.max_length = len(max(sequences))
-            x_train = pad_sequences(sequences,
-                                          maxlen = self.max_length,
-                                          dtype = 'int32',
-                                          padding = 'post'
-                                          )
-            
-            #do the same for validation data
-    
-            testing_sequences = tokenizer.texts_to_sequences(self.x_test)
-            self.x_test = pad_sequences(testing_sequences,
-                                           maxlen=self.max_length,
-                                           dtype = 'int32',
-                                           padding = 'post'
-                                           )
-            
-            #create embedding matrix for words in our training data  
-            counter[0] += 1
-            yield ({'main_input': x_train, 'aux_input': np.asarray(self.x_aux_train)},
-            {'main_output': self.y_train, 'aux_output': self.y_aux_train})
-    
-    def fit(self, chunk_size, epochs = 5, batch_size = 32):
+    def fit(self, epochs = 5, batch_size = 32, lstm_dim = 32):
         self.epochs = epochs
         self.batch_size = batch_size
+        self.lstm_dim = 32
         
         #functional API keras implementation of neural network
         main_input = Input(shape = (self.max_length,), dtype = 'int32', name = 'main_input')
         embed_layer = Embedding(self.vocab_size, embedding_dim, weights = [self.embed_mat],
                                 input_length = self.max_length, trainable = False)(main_input)
-        lstm_layer = LSTM(units = lstm_dim)(embed_layer)
+        lstm_layer = LSTM(units = self.lstm_dim)(embed_layer)
         
         #auxilliary output
         auxilliary_output = Dense(1, activation='sigmoid', name='aux_output')(lstm_layer)
@@ -234,7 +141,7 @@ class myModel:
                       metrics=['accuracy'], loss_weights = [0.8, 0.2])
         model.summary()
         
-        training_gen = self.genData(chunk_size = chunk_size)
+        training_gen = self.genData()
         
         steps_per_epoch = math.ceil(self.total/self.batch_size)
         self.history = model.fit_generator(training_gen, 
