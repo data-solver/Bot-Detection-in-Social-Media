@@ -36,14 +36,13 @@ import os
 from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 import pickle
-import time
+import numpy as np
 import csv
 
 
-
-
+#longest list of tokens - may need to change this
 global max_length
-max_length = 0
+max_length = 200
 def toToken(counter = [1,1], current_data = [0], break_outer = [0]):
     parent_dir = ("C:/Users/Kumar/OneDrive - Imperial College London/Year 3/UROP/"
                   "Dataset/cresci-2017.csv/datasets_full.csv/")
@@ -160,7 +159,7 @@ def toPadded(tokenizer, counter = [1,1], current_data = [0], break_outer = [0]):
                         break_outer[0] = 1
                         break
                 try:
-                    sequence = tokenizer.texts_to_sequences(row[1])
+                    sequence = tokenizer.texts_to_sequences([row[1]])
                 except TypeError:
                     print("TypeError", row[1])
                     continue
@@ -171,17 +170,19 @@ def toPadded(tokenizer, counter = [1,1], current_data = [0], break_outer = [0]):
                     break_outer[0] = 1
                     print("all files finished")
                     break
-                temp = pad_sequences(sequence,
+                sequence_padded = pad_sequences(sequence,
                                           maxlen = max_length,
                                           dtype = 'int32',
                                           padding = 'post'
-                                          )    
-                sequence_padded = []
-                for element in temp:
-                    try:
-                        sequence_padded.append(element[0])
-                    except IndexError:
-                        continue
+                                          )[0]   
+#                yield sequence
+#                sequence_padded = []
+#                for element in temp:
+#                    try:
+#                        sequence_padded.append(element[0])
+#                    except IndexError:
+#                        sequence_padded.append(element)
+#                        continue
                     
                 #if we are in the first 3 files, the tweet is from a bot
                 if current_data[0] != 3:
@@ -204,8 +205,15 @@ def toPadded(tokenizer, counter = [1,1], current_data = [0], break_outer = [0]):
                 
                 yield output
 
-#write processed data to disk  
-with open('processed_data.csv', 'w') as csvfile:
+#write processed data to disk              
+parent_dir = ("C:/Users/Kumar/OneDrive - Imperial College London/"
+              "Github repositories/Bot-Detection-in-Social-Media/tokenisation")
+with open(os.path.join(parent_dir,'tokenizer.pickle'), 'rb') as handle:
+    tokenizer = pickle.load(handle)
+
+parent_dir = ("C:/Users/Kumar/OneDrive - Imperial College London/Year 3/UROP"
+              "/Dataset")
+with open(os.path.join(parent_dir,'processed_data.csv'), 'w', newline = '') as csvfile:
     writer = csv.writer(csvfile)
     genPadded = toPadded(tokenizer)
     #write the header
@@ -214,7 +222,52 @@ with open('processed_data.csv', 'w') as csvfile:
     writer.writerow(header)
     while True:
         writer.writerow(next(genPadded))
+
+#count rows in processed_data.csv
+with open(os.path.join(parent_dir,'processed_data.csv'), 'r') as csvfile:
+    csvreader = csv.reader(csvfile)
+    row_count = sum(1 for row in csvreader)
         
+    
+##shuffle the rows of this csv file
+#indices_list = np.arange(1,row_count-1)
+#indices_shuffled = np.random.choice(indices_list, size = len(indices_list),
+#                                                             replace = False)
+with open(os.path.join(parent_dir,'processed_data.csv'), 'r') as r, \
+    open(os.path.join(parent_dir, 'shuffled_processed_data.csv'), 'w') as w:
+        writer = csv.writer(w)
+        #write the header
+        header = ['padded_tweet', 'retweet_count', 'reply_count', 'favorite_count',
+                  'num_hashtags', 'num_urls', 'num_mentions', 'label'] 
+        writer.writerow(header)
+        #load processed_data into dataframe (its small enough to fit in RAM)
+        df = pd.read_csv(r)
+        #shuffle the rows of this csv file
+        size = len(df)
+        indices_list = np.arange(1,size)
+        indices_shuffled = np.random.choice(indices_list, 
+                                            size = len(indices_list), 
+                                                       replace = False)
+        for element in indices_shuffled:
+            writer.writerow(df.iloc[element,:])
+            
+"""
+with open(os.path.join(parent_dir, 'shuffled_processed_data.csv'), 'r') as w:
+    ...:     csvreader = csv.reader(w)
+    ...:     for i in range(10):
+    ...:         print(next(csvreader))
+"""
+
+
+"""
+count number of lines in unshuffled data - n
+create a 1d array [1,...,n]
+use np.random.choice to generate a number from this list without replacement
+use that number to index a row from the unshuffled data and write this row
+to the shuffled_data csv file
+
+repeat till 1d array is empty
+"""
 
     
     

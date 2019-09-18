@@ -6,6 +6,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 import math
+import pickle
 from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from tensorflow.keras.layers import Flatten, Dense, Embedding, LSTM, Input, \
@@ -13,6 +14,7 @@ from tensorflow.keras.layers import Flatten, Dense, Embedding, LSTM, Input, \
 from tensorflow.keras import backend as K
 from tensorflow.keras.models import Model, Sequential
 from sklearn.model_selection import train_test_split
+
 
 
 
@@ -68,64 +70,24 @@ with open(os.path.join(GLOVE_DIR, 'glove.twitter.27B.50d.txt'), encoding = "UTF-
         word = values[0]
         coefs = np.asarray(values[1:], dtype='float32')
         embed_index[word] = coefs
-        
-vocab_size = len(embed_index)
-count = 0
-##create embedding matrix
-#embed_mat = np.zeros((vocab_size, embedding_dim))
-#for word, index in  embed_index.items():
-#    embed_vec = embed_index[word]
-#    if embed_vec is not None:
-#        try:
-#            embed_mat[count] = embed_vec  
-#            count +=1
-#        except ValueError:
-#            continue
-        
-#create embedding matrix based on words in training data
-temp_dir = ("C:/Users/Kumar/OneDrive - Imperial College London/Year 3/UROP/"
-                  "Dataset/cresci-2017.csv/datasets_full.csv/")
-with open(os.path.join(temp_dir, 'social_spambots_1.csv/tweets.csv'), 
-          encoding = "Latin-1") as f:
-    df = pd.read_csv(f)
-    df = df.dropna(subset = ['text'])
-tokenized_tweets = []
-count = 0
-for row in df['text']:
-    temp = ldp.tokenizer1(row)
-    tokenized_tweets.append(ldp.refine_token(temp))
-    count += 1
-    if count == 30000:
-        break
-    
-tokenizer = Tokenizer(num_words = 100000, filters = '!"#$%&()*+,-./:;=?@[\\]^_`{|}~\t\n')
-tokenizer.fit_on_texts(tokenized_tweets)
-word_index = tokenizer.word_index
-#transform our tweets into their integer representation
-sequences = tokenizer.texts_to_sequences(tokenized_tweets)
 
-#pad sequences so that they are all same length
-#            self.max_length = len(max(sequences))
-max_length = 50
-tokenised_tweets = pad_sequences(sequences,
-                              maxlen = max_length,
-                              dtype = 'int32',
-                              padding = 'post'
-                              )
-vocab_size = len(word_index) + 1
-embed_mat = np.zeros(shape = (vocab_size, embedding_dim))
-for word, index in word_index.items():
-    embed_vec = embed_index.get(word)
-    if embed_vec is not None:
-        embed_mat[index-1] = embed_vec 
-
-
+#create embedding matrix
+parent_dir = ("C:/Users/Kumar/OneDrive - Imperial College London/"
+              "Github repositories/Bot-Detection-in-Social-Media/tokenisation")
+with open(os.path.join(parent_dir,'tokenizer.pickle'), 'rb') as handle:
+    tokenizer = pickle.load(handle)
+    word_index = tokenizer.word_index
+    vocab_size = len(word_index) + 1
+    embed_mat = np.zeros((vocab_size, embedding_dim))
+    for word, index in word_index.items():
+        embed_vec = embed_index.get(word)
+        if embed_vec is not None:
+            embed_mat[index-1] = embed_vec
 
 class myModel:
     
     def __init__(self, embed_mat, max_length = 50):
         self.max_length = max_length
-        self.embed_mat = embed_mat
         self.vocab_size = embed_mat.shape[0]
         tweet_nos = [1610176, 428542, 1418626, 8377522]
         self.total = sum(tweet_nos)
@@ -236,12 +198,7 @@ class myModel:
                                            padding = 'post'
                                            )
             
-            #create embedding matrix for words in our training data
-#            self.embed_mat = np.zeros((self.vocab_size, embedding_dim))
-#            for word, index in  self.word_index.items():
-#                embed_vec = embed_index.get(word)
-#                if embed_vec is not None:
-#                    self.embed_mat[index-1] = embed_vec  
+            #create embedding matrix for words in our training data  
             counter[0] += 1
             yield ({'main_input': x_train, 'aux_input': np.asarray(self.x_aux_train)},
             {'main_output': self.y_train, 'aux_output': self.y_aux_train})
