@@ -167,3 +167,4 @@ class myModel:
         
 #plot_graphs(history, 'main_output_acc')
 #plot_graphs(history, 'main_output_loss')
+

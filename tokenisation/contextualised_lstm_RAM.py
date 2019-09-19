@@ -21,7 +21,7 @@ import ast
 
 #number of rows to test with (delete when working with full data,
 #and remove df.head(n) from the below segments of code)
-n = 10000
+n = 5000
 
 #output dimension of lstm layer
 lstm_dim = 32
