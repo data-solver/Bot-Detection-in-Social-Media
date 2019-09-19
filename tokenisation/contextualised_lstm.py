@@ -16,6 +16,7 @@ from tensorflow.keras.layers import Flatten, Dense, Embedding, LSTM, Input, \
 from tensorflow.keras import backend as K
 from tensorflow.keras.models import Model, Sequential
 from sklearn.model_selection import train_test_split
+from tensorflow.keras.initializers import Constant
 
 
 
@@ -81,7 +82,7 @@ class myModel:
         rows - number of rows in file we are generating data from
         counter - keep track of how far into the file we are
         """
-        self.batch_size = 32
+        self.batch_size = batch_size
         parent_dir = ("C:/Users/Kumar/OneDrive - Imperial College London/Year 3/UROP"
               "/Dataset")
         with open(os.path.join(parent_dir, 'shuffled_processed_data.csv'), 'r') as r:
@@ -89,20 +90,17 @@ class myModel:
             #skip header
             next(reader)
             while True:
-                x_list = []
-                x_aux_list = []
-                y_list = []
+                x = np.zeros((batch_size, self.max_length))
+                x_aux = np.zeros((batch_size, 6))
+                y = np.zeros(batch_size)
                 for i in range(self.batch_size):
                     row = next(reader)
                     #use eval since list will be inside of string
-                    x_list.append(eval(row[0]))
+                    x[i] = eval(row[0])
                     
-                    x_aux_list.append(row[1:7])
+                    x_aux[i] = row[1:7]
                     
-                    y_list.append(row[7])
-                x = np.array(x_list)
-                x_aux = np.array(x_aux_list)
-                y = np.array(y_list)
+                    y[i] = row[7]
                 counter[0] += self.batch_size
                 if counter[0] > rows:
                     counter[0] = 0
@@ -116,7 +114,8 @@ class myModel:
         
         #functional API keras implementation of neural network
         main_input = Input(shape = (self.max_length,), dtype = 'int32', name = 'main_input')
-        embed_layer = Embedding(self.vocab_size, embedding_dim, weights = [self.embed_mat],
+        embed_layer = Embedding(self.vocab_size, embedding_dim,
+                                embeddings_initializer = Constant(self.embed_mat),
                                 input_length = self.max_length, trainable = False)(main_input)
         lstm_layer = LSTM(units = self.lstm_dim)(embed_layer)
         
@@ -141,7 +140,7 @@ class myModel:
                       metrics=['accuracy'], loss_weights = [0.8, 0.2])
         model.summary()
         
-        training_gen = self.genData()
+        training_gen = self.genData(batch_size = self.batch_size)
         
         steps_per_epoch = math.ceil(self.total/self.batch_size)
         self.history = model.fit_generator(training_gen, 
