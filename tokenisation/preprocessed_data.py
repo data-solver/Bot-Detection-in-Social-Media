@@ -42,7 +42,7 @@ import csv
 
 #longest list of tokens - may need to change this
 global max_length
-max_length = 200
+max_length = 30
 def toToken(counter = [1,1], current_data = [0], break_outer = [0]):
     parent_dir = ("C:/Users/Kumar/OneDrive - Imperial College London/Year 3/UROP/"
                   "Dataset/cresci-2017.csv/datasets_full.csv/")
@@ -78,11 +78,11 @@ def toToken(counter = [1,1], current_data = [0], break_outer = [0]):
                     counter[1] = 1
                     print("finished file", current_data[0])
                     break
-                    #if we are at the last file, break
-                    if current_data[0] > 3:
-                        print("all files finished")
-                        break_outer[0] = 1
-                        break
+                #if we are at the last file, break
+                if current_data[0] > 3:
+                    print("all files finished")
+                    break_outer[0] = 1
+                    break
                 try:
                     temp = ldp.tokenizer1(row[1])
                 except TypeError:
@@ -96,12 +96,6 @@ def toToken(counter = [1,1], current_data = [0], break_outer = [0]):
                     print("all files finished")
                     break
                 tokenized_tweet = ldp.refine_token(temp)
-
-                #store the maximum length of tokens
-                global max_length
-                if len(tokenized_tweet) > max_length:
-                    max_length = len(tokenized_tweet)
-#                    print("max_length",max_length, tokenized_tweet)
                 counter[0] += 1
                 
                 #report progress
@@ -109,14 +103,6 @@ def toToken(counter = [1,1], current_data = [0], break_outer = [0]):
                     print(counter[1], "lots of 10000 entries done")
                     counter[1] += 1
                 yield tokenized_tweet
-
-tokenGen = toToken()
-tokenizer = Tokenizer(filters = '!"#$%&()*+,-./:;=?@[\\]^_`{|}~\t\n')
-tokenizer.fit_on_texts(tokenGen)
-
-#save the tokenizer to disk so we don't need to recompute
-with open('tokenizer.pickle', 'wb') as handle:
-    pickle.dump(tokenizer, handle, protocol = pickle.HIGHEST_PROTOCOL)
     
 def toPadded(tokenizer, counter = [1,1], current_data = [0], break_outer = [0]):
     parent_dir = ("C:/Users/Kumar/OneDrive - Imperial College London/Year 3/UROP/"
@@ -153,11 +139,11 @@ def toPadded(tokenizer, counter = [1,1], current_data = [0], break_outer = [0]):
                     counter[1] = 1
                     print("finished file", current_data[0])
                     break
-                    #if we are at the last file, break
-                    if current_data[0] > 3:
-                        print("all files finished")
-                        break_outer[0] = 1
-                        break
+                #if we are at the last file, break
+                if current_data[0] > 3:
+                    print("all files finished")
+                    break_outer[0] = 1
+                    break
                 try:
                     sequence = tokenizer.texts_to_sequences([row[1]])
                 except TypeError:
@@ -201,51 +187,60 @@ def toPadded(tokenizer, counter = [1,1], current_data = [0], break_outer = [0]):
                     counter[1] += 1
                 
                 yield output
-
-#load tokenizer             
-parent_dir = ("C:/Users/Kumar/OneDrive - Imperial College London/"
-              "Github repositories/Bot-Detection-in-Social-Media/tokenisation")
-with open(os.path.join(parent_dir,'tokenizer.pickle'), 'rb') as handle:
-    tokenizer = pickle.load(handle)
-
-#write processed data to disk
-parent_dir = ("C:/Users/Kumar/OneDrive - Imperial College London/Year 3/UROP"
-              "/Dataset")
-with open(os.path.join(parent_dir,'processed_data.csv'), 'w', newline = '') as csvfile:
-    writer = csv.writer(csvfile)
-    genPadded = toPadded(tokenizer)
-    #write the header
-    header = ['padded_tweet', 'retweet_count', 'reply_count', 'favorite_count',
-              'num_hashtags', 'num_urls', 'num_mentions', 'label']
-    writer.writerow(header)
-    while True:
-        writer.writerow(next(genPadded))
-
-#count rows in processed_data.csv
-with open(os.path.join(parent_dir,'shuffled_processed_data.csv'), 'r') as csvfile:
-    csvreader = csv.reader(csvfile)
-    row_count = sum(1 for row in csvreader)
-        
+                
+                
+if __name__ == '__main__':
+    #create tokenizer
+    tokenGen = toToken()
+    tokenizer = Tokenizer(filters = '!"#$%&()*+,-./:;=?@[\\]^_`{|}~\t\n')
+    tokenizer.fit_on_texts(tokenGen)
     
-##shuffle the rows of this processed_data and write the shuffled version to a new file
-with open(os.path.join(parent_dir,'processed_data.csv'), 'r') as r, \
-    open(os.path.join(parent_dir, 'shuffled_processed_data.csv'), 'w', newline = '') as w:
-        writer = csv.writer(w)
+    #save the tokenizer to disk so we don't need to recompute
+    with open('tokenizer.pickle', 'wb') as handle:
+        pickle.dump(tokenizer, handle, protocol = pickle.HIGHEST_PROTOCOL)
+    #load tokenizer             
+    parent_dir = ("C:/Users/Kumar/OneDrive - Imperial College London/"
+                  "Github repositories/Bot-Detection-in-Social-Media/tokenisation")
+    with open(os.path.join(parent_dir,'tokenizer.pickle'), 'rb') as handle:
+        tokenizer = pickle.load(handle)
+    
+    #write processed data to disk
+    parent_dir = ("C:/Users/Kumar/OneDrive - Imperial College London/Year 3/UROP"
+                  "/Dataset")
+    with open(os.path.join(parent_dir,'processed_data.csv'), 'w', newline = '') as csvfile:
+        writer = csv.writer(csvfile)
+        genPadded = toPadded(tokenizer)
         #write the header
         header = ['padded_tweet', 'retweet_count', 'reply_count', 'favorite_count',
-                  'num_hashtags', 'num_urls', 'num_mentions', 'label'] 
+                  'num_hashtags', 'num_urls', 'num_mentions', 'label']
         writer.writerow(header)
-        #load processed_data into dataframe (its small enough to fit in RAM)
-        df = pd.read_csv(r).to_numpy()
-        #shuffle the rows of this csv file
-        size = len(df)
-        indices_list = np.arange(1,size)
-        indices_shuffled = np.random.choice(indices_list, 
-                                            size = len(indices_list), 
-                                                       replace = False)
-        for element in indices_shuffled:
-            writer.writerow(df[element])
-#            writer.writerow(df.iloc[element,:])
+        while True:
+            writer.writerow(next(genPadded))
+    
+    #count rows in processed_data.csv
+    with open(os.path.join(parent_dir,'shuffled_processed_data.csv'), 'r') as csvfile:
+        csvreader = csv.reader(csvfile)
+        row_count = sum(1 for row in csvreader)
+            
+        
+    ##shuffle the rows of this processed_data and write the shuffled version to a new file
+    with open(os.path.join(parent_dir,'processed_data.csv'), 'r') as r, \
+        open(os.path.join(parent_dir, 'shuffled_processed_data.csv'), 'w', newline = '') as w:
+            writer = csv.writer(w)
+            #write the header
+            header = ['padded_tweet', 'retweet_count', 'reply_count', 'favorite_count',
+                      'num_hashtags', 'num_urls', 'num_mentions', 'label'] 
+            writer.writerow(header)
+            #load processed_data into dataframe (its small enough to fit in RAM)
+            df = pd.read_csv(r).to_numpy()
+            #shuffle the rows of this csv file
+            size = len(df)
+            indices_list = np.arange(1,size)
+            indices_shuffled = np.random.choice(indices_list, 
+                                                size = len(indices_list), 
+                                                           replace = False)
+            for element in indices_shuffled:
+                writer.writerow(df[element])
             
 
     
