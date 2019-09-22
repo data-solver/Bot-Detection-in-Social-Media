@@ -39,31 +39,6 @@ auxilliary inputs are:
     number of urls
     number of mentions
 """
-
-#load glove embedding into a dictionary
-embedding_dim = 50
-embed_index = {}
-GLOVE_DIR = r"C:\Users\Kumar\OneDrive - Imperial College London\Year 3\UROP\glove.twitter.27B"
-with open(os.path.join(GLOVE_DIR, 'glove.twitter.27B.50d.txt'), encoding = "UTF-8") as f:
-    for line in f:
-        values = line.split()
-        word = values[0]
-        coefs = np.asarray(values[1:], dtype='float32')
-        embed_index[word] = coefs
-
-#create embedding matrix
-parent_dir = ("C:/Users/Kumar/OneDrive - Imperial College London/"
-              "Github repositories/Bot-Detection-in-Social-Media/tokenisation")
-with open(os.path.join(parent_dir,'tokenizer.pickle'), 'rb') as handle:
-    tokenizer = pickle.load(handle)
-    word_index = tokenizer.word_index
-    vocab_size = len(word_index) + 1
-    embed_mat = np.zeros((vocab_size, embedding_dim))
-    for word, index in word_index.items():
-        embed_vec = embed_index.get(word)
-        if embed_vec is not None:
-            embed_mat[index-1] = embed_vec
-
 class myModel:
     
     def __init__(self, embed_mat, max_length = 200):
@@ -164,7 +139,35 @@ class myModel:
       plt.ylabel(string)
       plt.legend([string, 'val_'+string])
       plt.show()
-        
-#plot_graphs(history, 'main_output_acc')
-#plot_graphs(history, 'main_output_loss')
+
+if __name__ == 'main':
+    #load glove embedding into a dictionary
+    embedding_dim = 50
+    embed_index = {}
+    GLOVE_DIR = r"C:\Users\Kumar\OneDrive - Imperial College London\Year 3\UROP\glove.twitter.27B"
+    with open(os.path.join(GLOVE_DIR, 'glove.twitter.27B.50d.txt'), encoding = "UTF-8") as f:
+        for line in f:
+            values = line.split()
+            word = values[0]
+            coefs = np.asarray(values[1:], dtype='float32')
+            embed_index[word] = coefs
+    
+    #create embedding matrix
+    parent_dir = ("C:/Users/Kumar/OneDrive - Imperial College London/"
+                  "Github repositories/Bot-Detection-in-Social-Media/tokenisation")
+    with open(os.path.join(parent_dir,'tokenizer.pickle'), 'rb') as handle:
+        tokenizer = pickle.load(handle)
+        word_index = tokenizer.word_index
+        vocab_size = len(word_index) + 1
+        embed_mat = np.zeros((vocab_size, embedding_dim))
+        for word, index in word_index.items():
+            embed_vec = embed_index.get(word)
+            if embed_vec is not None:
+                embed_mat[index-1] = embed_vec
+    
+    #fit the model
+    model = myModel(embed_mat)
+    model.fit()       
+    plot_graphs(history, 'main_output_acc')
+    plot_graphs(history, 'main_output_loss')
 

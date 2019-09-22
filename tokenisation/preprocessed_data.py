@@ -217,13 +217,15 @@ if __name__ == '__main__':
         while True:
             writer.writerow(next(genPadded))
     
-    #count rows in processed_data.csv
+    # count rows in processed_data.csv
     with open(os.path.join(parent_dir,'shuffled_processed_data.csv'), 'r') as csvfile:
         csvreader = csv.reader(csvfile)
         row_count = sum(1 for row in csvreader)
             
-        
-    ##shuffle the rows of this processed_data and write the shuffled version to a new file
+    
+    shrink_data = True
+    length = 100000
+    # shuffle the rows of this processed_data and write the shuffled version to a new file
     with open(os.path.join(parent_dir,'processed_data.csv'), 'r') as r, \
         open(os.path.join(parent_dir, 'shuffled_processed_data.csv'), 'w', newline = '') as w:
             writer = csv.writer(w)
@@ -239,8 +241,13 @@ if __name__ == '__main__':
             indices_shuffled = np.random.choice(indices_list, 
                                                 size = len(indices_list), 
                                                            replace = False)
+            counter = 0
             for element in indices_shuffled:
                 writer.writerow(df[element])
+                counter += 1
+                if shrink_data == True:
+                    if counter == length:
+                        break
             
 
     
