@@ -1,35 +1,4 @@
 # -*- coding: utf-8 -*-
-
-"""
-idea:
-    create an empty csv file 'data'
-    
-    create a generator function which:
-        takes a tweet from a line in the original 4 csv files, tokenizes the tweet using
-        our ldp.refine_token function and yields the result * make sure generator stops
-        once full data is covered, as an aside: store the maximum length of the tokenized tweets
-        across all generator calls - max_length
-    
-    fit a keras.preprocessing.text.Tokenizer on this generator 
-    
-    create a function which goes line by line in the original 4 csv files and:
-        transform the tweet to a sequence
-        pads the sequence to max_length
-        writes each sequence to a new row under the column 'text' in our 'data' csv file
-    
-    go line by line and write the 6 columns of auxilliary input to our 'data' csv file
-    
-    
-    create embedding matrix for words in our training set
-    
-    write the list of padded sequences to a csv file, include labels for bot or not
-    and include 6 columns for the auxilliary input
-    
-    final csv file should have 8 columns: 1 for padded sequence representation
-    of tweet, 6 for auxilliary input, 1 for label (bot or not)
-    
-    then pass
-"""
 import lstm_data_processing as ldp
 import pandas as pd
 import os
@@ -38,11 +7,6 @@ from tensorflow.keras.preprocessing.sequence import pad_sequences
 import pickle
 import numpy as np
 import csv
-
-
-# longest list of tokens - may need to change this
-global max_length
-max_length = 30
 
 
 def toToken(counter=[1, 1], current_data=[0], break_outer=[0]):
@@ -188,9 +152,18 @@ def toPadded(tokenizer, counter=[1, 1], current_data=[0], break_outer=[0]):
 
 
 if __name__ == '__main__':
+    # maximum length to pad/truncate tokenized tweets to
+    max_length = 30
+    # whether or not to work with reduced dataset
+    shrink_data = True
+    # amount of data to work with
+    length = 100000
+    # number of words for tokenizer
+    num_words = 30000
     # create tokenizer
     tokenGen = toToken()
-    tokenizer = Tokenizer(filters='!"#$%&()*+,-./:;=?@[\\]^_`{|}~\t\n')
+    tokenizer = Tokenizer(nb_words=num_words,
+                          filters='!"#$%&()*+,-./:;=?@[\\]^_`{|}~\t\n')
     tokenizer.fit_on_texts(tokenGen)
     # save the tokenizer to disk so we don't need to recompute
     with open('tokenizer.pickle', 'wb') as handle:
@@ -220,8 +193,6 @@ if __name__ == '__main__':
               'r') as csvfile:
         csvreader = csv.reader(csvfile)
         row_count = sum(1 for row in csvreader)
-    shrink_data = True
-    length = 100000
     # shuffle the rows of this processed_data and write the shuffled version to
     # a new file
     with open(os.path.join(parent_dir, 'processed_data.csv'), 'r') as r, \
