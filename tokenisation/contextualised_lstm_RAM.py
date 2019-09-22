@@ -1,8 +1,5 @@
 # -*- coding: utf-8 -*-
-lstm_data_proc_dir = "C:/Users/Kumar/OneDrive - Imperial College London/Github repositories/Bot-Detection-in-Social-" \
-                     "Media/tokenisation"
 import pandas as pd
-from lstm_data_proc_dir import lstm_data_processing as ldp
 import os
 import numpy as np
 import matplotlib.pyplot as plt
@@ -37,8 +34,10 @@ auxilliary inputs are:
 # load glove embedding into a dictionary
 embedding_dim = 50
 embed_index = {}
-GLOVE_DIR = r"C:\Users\Kumar\OneDrive - Imperial College London\Year 3\UROP\glove.twitter.27B"
-with open(os.path.join(GLOVE_DIR, 'glove.twitter.27B.50d.txt'), encoding="UTF-8") as f:
+GLOVE_DIR = ("C:/Users/Kumar/OneDrive - Imperial College London/Year 3/UROP"
+             "/glove.twitter.27B")
+with open(os.path.join(GLOVE_DIR, 'glove.twitter.27B.50d.txt'),
+          encoding="UTF-8") as f:
     for line in f:
         values = line.split()
         word = values[0]
@@ -66,9 +65,11 @@ with open(os.path.join(parent_dir, 'shuffled_processed_data.csv'), 'r') as r:
 train, test = train_test_split(data,
                                test_size=0.2,
                                random_state=4)
-main_Itrain = np.array(train['padded_tweet'].apply(ast.literal_eval).values.tolist())
+main_Itrain = np.array(train['padded_tweet'].apply(ast.literal_eval).values.
+                       tolist())
 aux_Itrain = train.iloc[:, 1:7]
-main_Itest = np.array(test['padded_tweet'].apply(ast.literal_eval).values.tolist())
+main_Itest = np.array(test['padded_tweet'].apply(ast.literal_eval).values.
+                      tolist())
 aux_Itest = test.iloc[:, 1:7]
 
 max_length = 200
@@ -80,7 +81,8 @@ embed_layer = Embedding(vocab_size, embedding_dim,
 lstm_layer = LSTM(units=lstm_dim)(embed_layer)
 
 # auxilliary output
-auxilliary_output = Dense(1, activation='sigmoid', name='aux_output')(lstm_layer)
+auxilliary_output = Dense(1, activation='sigmoid', name='aux_output')
+(lstm_layer)
 
 # auxilliary input
 input_shape = 6
@@ -105,7 +107,8 @@ batch_size = 32
 
 # all data inputted here must be arrays, not dataframes
 history = model.fit({'main_input': main_Itrain, 'aux_input': aux_Itrain},
-                    {'main_output': train['label'], 'aux_output': train['label']},
+                    {'main_output': train['label'], 'aux_output':
+                        train['label']},
                     validation_data=({'main_input': main_Itest,
                                       'aux_input': aux_Itest},
                                      {'main_output': test['label'],
