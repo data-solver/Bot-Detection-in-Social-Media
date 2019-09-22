@@ -35,7 +35,6 @@ class token_class:
         """
         urls = re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|\
                           (?:%[0-9a-fA-F][0-9a-fA-F]))+', self.token)
-        
         if len(urls) == 0:
             return False
         else:
@@ -55,7 +54,7 @@ class token_class:
         """
         checks if token is a user mention
         """
-        temp = nltk.TweetTokenizer(strip_handles = True)
+        temp = nltk.TweetTokenizer(strip_handles=True)
         result = temp.tokenize(self.token)
         if result == []:
             return True
@@ -66,10 +65,9 @@ class token_class:
         """
         checks if token is an emoji
         ***
-        for now the function will just return [True, '<emoji>'] if the token is 
+        for now the function will just return [True, '<emoji>'] if the token is
         an emoji, [False, None] if it is not
         ***
-        
         TO BE IMPLEMENTED:
         if it is, it returns True and the type of emoji that the token is
         else, returns False and None
@@ -78,8 +76,7 @@ class token_class:
             return [True, '<neutralface>']
         else:
             return [False, None]
-#        return [None, None]
-    
+
     def is_repeated(self):
         """
         checks if token has repeated letters
@@ -91,68 +88,62 @@ class token_class:
             return [False, self.token]
         else:
             return [True, reduced_token]
-    
+
     def get_token(self):
         return self.token
+
 
 def tokenizer1(tweet):
     """
     splits tweet into initial list of tokens
     """
-    tknzr = nltk.TweetTokenizer(preserve_case = True, strip_handles = False)
+    tknzr = nltk.TweetTokenizer(preserve_case=True, strip_handles=False)
     token_list = tknzr.tokenize(tweet)
     return token_list
+
 
 def refine_token(token_list):
     """
     refines list of tokens to be in line with rules at top of this file
     """
-    
+
     refined_token_list = []
     for token in token_list:
         token = token_class(token)
-        if token.is_url() == True:
+        if token.is_url():
             refined_token_list.append('<url>')
             continue
-        if token.is_number() == True:
+        if token.is_number():
             refined_token_list.append('<number>')
             continue
-        if token.is_user_mention() == True:
+        if token.is_user_mention():
             refined_token_list.append('<user>')
             continue
-        
         temp = token.is_emoji()
-        if temp[0] == True:
+        if temp[0]:
             refined_token_list.append(temp[1])
             continue
-        
         temp = token.is_repeated()
-        if temp[0] == True:
+        if temp[0]:
             refined_token_list.append(temp[1].lower())
             refined_token_list.append('<repeat>')
-            if token.get_token().isupper() == True:
+            if token.get_token().isupper():
                 refined_token_list.append('<allcaps>')
             continue
-        
-        if token.get_token().isupper() == True:
+        if token.get_token().isupper():
             refined_token_list.append(token.get_token().lower())
             refined_token_list.append('<allcaps>')
             continue
-        
-        #check for 1 hashtag at start of token
+        # check for 1 hashtag at start of token
         if token.get_token()[0] == '#':
             refined_token_list.append('<hashtag>')
             refined_token_list.append(token.get_token()[1:])
-            continue  
-        #check for 2 hashtags at start of token (there can't be more than 2 since
-        #we already dealt with such cases with is_repeated)
+            continue
+        # check for 2 hashtags at start of token (there can't be more than 2
+        # since we already dealt with such cases with is_repeated)
         if token.get_token()[0] == '#' and token.get_token()[1] == '#':
             refined_token_list.append('<hashtag>')
             refined_token_list.append(token.get_token()[2:])
             continue
-        
         refined_token_list.append(token.get_token().lower())
-        
     return refined_token_list
-        
-            
