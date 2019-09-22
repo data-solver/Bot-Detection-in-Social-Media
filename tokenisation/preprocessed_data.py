@@ -162,7 +162,7 @@ if __name__ == '__main__':
     num_words = 30000
     # create tokenizer
     tokenGen = toToken()
-    tokenizer = Tokenizer(nb_words=num_words,
+    tokenizer = Tokenizer(num_words=num_words,
                           filters='!"#$%&()*+,-./:;=?@[\\]^_`{|}~\t\n')
     tokenizer.fit_on_texts(tokenGen)
     # save the tokenizer to disk so we don't need to recompute
@@ -187,7 +187,11 @@ if __name__ == '__main__':
                   'label']
         writer.writerow(header)
         while True:
-            writer.writerow(next(genPadded))
+            try:
+                writer.writerow(next(genPadded))
+            # stop when we reach the end of the file
+            except StopIteration:
+                break
     # count rows in processed_data.csv
     with open(os.path.join(parent_dir, 'shuffled_processed_data.csv'),
               'r') as csvfile:

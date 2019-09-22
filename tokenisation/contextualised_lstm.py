@@ -37,16 +37,17 @@ auxilliary inputs are:
 
 
 class myModel:
-    def __init__(self, embed_mat, max_length=200):
+    def __init__(self, embed_mat, row_count, max_length=30):
         self.max_length = max_length
         self.vocab_size = embed_mat.shape[0]
         tweet_nos = [1610176, 428542, 1418626, 8377522]
         self.total = sum(tweet_nos)
         self.embed_mat = embed_mat
+        self.row_count = row_count
         pass
     # function to generate chunks of data from csv
 
-    def genData(self, counter=[0], batch_size=32, rows=6296494):
+    def genData(self, counter=[0], batch_size=32, rows=self.row_count):
         """
         Generator function passed to keras.fit_generator to train in chunks
         batch_size - size of data yielded from csv file
@@ -72,7 +73,7 @@ class myModel:
                     x_aux[i] = row[1:7]
                     y[i] = row[7]
                 counter[0] += self.batch_size
-                if counter[0] > rows:
+                if counter[0] > self.row_count:
                     counter[0] = 0
                 yield ({'main_input': x, 'aux_input': x_aux},
                        {'main_output': y, 'aux_output': y})
