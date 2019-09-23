@@ -8,10 +8,18 @@ import pickle
 import numpy as np
 import csv
 
+# directories for files and data
+original_data_dir = ("C:/Users/Kumar/OneDrive - Imperial College London/Year 3"
+                     "/UROP/Dataset/cresci-2017.csv/datasets_full.csv/")
+tokenizer_dir = ("C:/Users/Kumar/OneDrive - Imperial College London/"
+                 "Github repositories/Bot-Detection-in-Social-Media/"
+                 "tokenisation")
+proc_data_dir = ("C:/Users/Kumar/OneDrive - Imperial College London/Year 3/"
+                 "UROP/Dataset")
 
-def toToken(counter=[1, 1], current_data=[0], break_outer=[0]):
-    parent_dir = ("C:/Users/Kumar/OneDrive - Imperial College London/Year 3/"
-                  "UROP/Dataset/cresci-2017.csv/datasets_full.csv/")
+
+def toToken(counter=[1, 1], current_data=[0], break_outer=[0],
+            parent_dir=original_data_dir):
     # list of directories: ss1, ss2, ss3, genuine accounts
     data_dir = []
     data_dir.append('social_spambots_1.csv/tweets.csv')
@@ -70,9 +78,8 @@ def toToken(counter=[1, 1], current_data=[0], break_outer=[0]):
                 yield tokenized_tweet
 
 
-def toPadded(tokenizer, counter=[1, 1], current_data=[0], break_outer=[0]):
-    parent_dir = ("C:/Users/Kumar/OneDrive - Imperial College London/Year 3/"
-                  "UROP/Dataset/cresci-2017.csv/datasets_full.csv/")
+def toPadded(tokenizer, counter=[1, 1], current_data=[0], break_outer=[0],
+             parent_dir=original_data_dir):
     # list of directories: ss1, ss2, ss3, genuine accounts
     data_dir = []
     data_dir.append('social_spambots_1.csv/tweets.csv')
@@ -169,15 +176,10 @@ if __name__ == '__main__':
     with open('tokenizer.pickle', 'wb') as handle:
         pickle.dump(tokenizer, handle, protocol=pickle.HIGHEST_PROTOCOL)
     # load tokenizer
-    parent_dir = ("C:/Users/Kumar/OneDrive - Imperial College London/"
-                  "Github repositories/Bot-Detection-in-Social-Media/"
-                  "tokenisation")
-    with open(os.path.join(parent_dir, 'tokenizer.pickle'), 'rb') as handle:
+    with open(os.path.join(tokenizer_dir, 'tokenizer.pickle'), 'rb') as handle:
         tokenizer = pickle.load(handle)
     # write processed data to disk
-    parent_dir = ("C:/Users/Kumar/OneDrive - Imperial College London/Year 3/"
-                  "UROP/Dataset")
-    with open(os.path.join(parent_dir, 'processed_data.csv'), 'w',
+    with open(os.path.join(proc_data_dir, 'processed_data.csv'), 'w',
               newline='') as csvfile:
         writer = csv.writer(csvfile)
         genPadded = toPadded(tokenizer)
@@ -193,14 +195,14 @@ if __name__ == '__main__':
             except StopIteration:
                 break
     # count rows in processed_data.csv
-    with open(os.path.join(parent_dir, 'shuffled_processed_data.csv'),
+    with open(os.path.join(proc_data_dir, 'shuffled_processed_data.csv'),
               'r') as csvfile:
         csvreader = csv.reader(csvfile)
         row_count = sum(1 for row in csvreader)
     # shuffle the rows of this processed_data and write the shuffled version to
     # a new file
-    with open(os.path.join(parent_dir, 'processed_data.csv'), 'r') as r, \
-        open(os.path.join(parent_dir, 'shuffled_processed_data.csv'), 'w',
+    with open(os.path.join(proc_data_dir, 'processed_data.csv'), 'r') as r, \
+        open(os.path.join(proc_data_dir, 'shuffled_processed_data.csv'), 'w',
              newline='') as w:
         writer = csv.writer(w)
         # write the header

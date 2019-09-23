@@ -3,12 +3,8 @@ import pandas as pd
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-from tensorflow.keras.preprocessing.text import Tokenizer
-from tensorflow.keras.preprocessing.sequence import pad_sequences
-from tensorflow.keras.layers import Flatten, Dense, Embedding, LSTM, Input, \
-    concatenate
-from tensorflow.keras import backend as K
-from tensorflow.keras.models import Model, Sequential
+from tensorflow.keras.layers import Dense, Embedding, LSTM, Input, concatenate
+from tensorflow.keras.models import Model
 from sklearn.model_selection import train_test_split
 from tensorflow.keras.initializers import Constant
 import pickle
@@ -16,7 +12,7 @@ import ast
 
 # number of rows to test with (delete when working with full data,
 # and remove df.head(n) from the below segments of code)
-n = 5000
+# n = 5000
 
 # output dimension of lstm layer
 lstm_dim = 32
@@ -31,12 +27,22 @@ auxilliary inputs are:
     number of mentions
 """
 
+# directories for files and data
+# tokenizer
+tokenizer_dir = ("C:/Users/Kumar/OneDrive - Imperial College London/"
+                 "Github repositories/Bot-Detection-in-Social-Media/"
+                 "tokenisation")
+# pre-processed data
+proc_data_dir = ("C:/Users/Kumar/OneDrive - Imperial College London/Year 3/"
+                 "UROP/Dataset")
+# glove embedding
+glove_dir = ("C:/Users/Kumar/OneDrive - Imperial College London/Year 3/"
+             "UROP/glove.twitter.27B")
+
 # load glove embedding into a dictionary
 embedding_dim = 50
 embed_index = {}
-GLOVE_DIR = ("C:/Users/Kumar/OneDrive - Imperial College London/Year 3/UROP"
-             "/glove.twitter.27B")
-with open(os.path.join(GLOVE_DIR, 'glove.twitter.27B.50d.txt'),
+with open(os.path.join(glove_dir, 'glove.twitter.27B.50d.txt'),
           encoding="UTF-8") as f:
     for line in f:
         values = line.split()
@@ -45,9 +51,7 @@ with open(os.path.join(GLOVE_DIR, 'glove.twitter.27B.50d.txt'),
         embed_index[word] = coefs
 
 # create embedding matrix
-parent_dir = ("C:/Users/Kumar/OneDrive - Imperial College London/"
-              "Github repositories/Bot-Detection-in-Social-Media/tokenisation")
-with open(os.path.join(parent_dir, 'tokenizer.pickle'), 'rb') as handle:
+with open(os.path.join(tokenizer_dir, 'tokenizer.pickle'), 'rb') as handle:
     tokenizer = pickle.load(handle)
     word_index = tokenizer.word_index
     vocab_size = len(word_index) + 1
@@ -56,11 +60,9 @@ with open(os.path.join(parent_dir, 'tokenizer.pickle'), 'rb') as handle:
         embed_vec = embed_index.get(word)
         if embed_vec is not None:
             embed_mat[index - 1] = embed_vec
-
-parent_dir = ("C:/Users/Kumar/OneDrive - Imperial College London/Year 3/UROP"
-              "/Dataset")
-with open(os.path.join(parent_dir, 'shuffled_processed_data.csv'), 'r') as r:
-    data = pd.read_csv(r, nrows=n)
+with open(os.path.join(proc_data_dir, 'shuffled_processed_data.csv'),
+          'r') as r:
+    data = pd.read_csv(r)
 # split tweets into training/validation
 train, test = train_test_split(data,
                                test_size=0.2,
@@ -72,7 +74,7 @@ main_Itest = np.array(test['padded_tweet'].apply(ast.literal_eval).values.
                       tolist())
 aux_Itest = test.iloc[:, 1:7]
 
-max_length = 200
+max_length = 30
 # functional API keras implementation of neural network
 main_input = Input(shape=(max_length,), dtype='int32', name='main_input')
 embed_layer = Embedding(vocab_size, embedding_dim,
@@ -81,8 +83,7 @@ embed_layer = Embedding(vocab_size, embedding_dim,
 lstm_layer = LSTM(units=lstm_dim)(embed_layer)
 
 # auxilliary output
-auxilliary_output = Dense(1, activation='sigmoid', name='aux_output')
-(lstm_layer)
+auxilliary_output = Dense(1, activation='sigmoid', name='aux_output')(lstm_layer)
 
 # auxilliary input
 input_shape = 6
