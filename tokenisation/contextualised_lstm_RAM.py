@@ -54,10 +54,13 @@ with open(os.path.join(glove_dir, 'glove.twitter.27B.50d.txt'),
 with open(os.path.join(tokenizer_dir, 'tokenizer.pickle'), 'rb') as handle:
     tokenizer = pickle.load(handle)
     word_index = tokenizer.word_index
-    vocab_size = len(word_index) + 1
+#    vocab_size = len(word_index) + 1
+    vocab_size = 30000
     embed_mat = np.zeros((vocab_size, embedding_dim))
     for word, index in word_index.items():
         embed_vec = embed_index.get(word)
+        if index == vocab_size:
+            break
         if embed_vec is not None:
             embed_mat[index - 1] = embed_vec
 with open(os.path.join(proc_data_dir, 'shuffled_processed_data.csv'),
@@ -103,7 +106,7 @@ model.compile(loss='binary_crossentropy', optimizer='rmsprop',
               metrics=['accuracy'], loss_weights=[0.8, 0.2])
 model.summary()
 
-num_epochs = 20
+num_epochs = 10
 batch_size = 32
 
 # all data inputted here must be arrays, not dataframes

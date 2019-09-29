@@ -140,7 +140,8 @@ if __name__ == '__main__':
     with open(os.path.join(tokenizer_dir, 'tokenizer.pickle'), 'rb') as handle:
         tokenizer = pickle.load(handle)
         word_index = tokenizer.word_index
-        vocab_size = len(word_index) + 1
+#        vocab_size = len(word_index) + 1
+        vocab_size = 30000
         embed_mat = np.zeros((vocab_size, embedding_dim))
         for word, index in word_index.items():
             embed_vec = embed_index.get(word)

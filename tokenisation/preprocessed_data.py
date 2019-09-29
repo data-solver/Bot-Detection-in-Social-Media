@@ -9,11 +9,14 @@ import numpy as np
 import csv
 
 # directories for files and data
+# original data
 original_data_dir = ("C:/Users/Kumar/OneDrive - Imperial College London/Year 3"
                      "/UROP/Dataset/cresci-2017.csv/datasets_full.csv/")
+# tokenizer fit on training set
 tokenizer_dir = ("C:/Users/Kumar/OneDrive - Imperial College London/"
                  "Github repositories/Bot-Detection-in-Social-Media/"
                  "tokenisation")
+# pre-processed data
 proc_data_dir = ("C:/Users/Kumar/OneDrive - Imperial College London/Year 3/"
                  "UROP/Dataset")
 
@@ -164,7 +167,7 @@ if __name__ == '__main__':
     # whether or not to work with reduced dataset
     shrink_data = True
     # amount of data to work with
-    length = 100000
+    length = 20000
     # number of words for tokenizer
     num_words = 30000
     # create tokenizer
