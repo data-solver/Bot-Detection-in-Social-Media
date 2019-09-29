@@ -165,9 +165,9 @@ if __name__ == '__main__':
     # maximum length to pad/truncate tokenized tweets to
     max_length = 30
     # whether or not to work with reduced dataset
-    shrink_data = True
+    shrink_data = False
     # amount of data to work with
-    length = 20000
+    length = 2000000
     # number of words for tokenizer
     num_words = 30000
     # create tokenizer
@@ -197,11 +197,6 @@ if __name__ == '__main__':
             # stop when we reach the end of the file
             except StopIteration:
                 break
-    # count rows in processed_data.csv
-    with open(os.path.join(proc_data_dir, 'shuffled_processed_data.csv'),
-              'r') as csvfile:
-        csvreader = csv.reader(csvfile)
-        row_count = sum(1 for row in csvreader)
     # shuffle the rows of this processed_data and write the shuffled version to
     # a new file
     with open(os.path.join(proc_data_dir, 'processed_data.csv'), 'r') as r, \
