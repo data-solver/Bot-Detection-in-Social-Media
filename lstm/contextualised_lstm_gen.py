@@ -111,7 +111,7 @@ class myModel:
         self.history = model.fit_generator(training_gen,
                                            epochs=self.epochs,
                                            steps_per_epoch=steps_per_epoch)
-        return(self.history, model)
+        return(self.history)
     # plot graph of validation/training accuracy and loss against epochs
 
     def plot_graphs(self, history, string):
@@ -180,7 +180,7 @@ def run_model(data_dirs, nrows=None, embedding_dim=50, max_length=30,
     # row count
     row_count = row_counter(proc_data_dir)
     model = myModel(embed_mat, row_count, data_dirs)
-    history, model = model.fit()
-    model.plot_graphs(model.history, 'main_output_acc')
+    model.fit()
+    model.plot_graphs(model.history, 'main_output_accuracy')
     model.plot_graphs(model.history, 'main_output_loss')
-    return(history)
+    return(model.history)

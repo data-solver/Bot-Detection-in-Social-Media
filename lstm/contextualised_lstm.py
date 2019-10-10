@@ -87,8 +87,7 @@ def split_data(data):
 
 
 # functional API keras implementation of neural network
-def fit_model(embed_mat, data, vocab_size, max_length=30,
-              num_epochs=10, batch_size=32):
+def fit_model(embed_mat, data, vocab_size, max_length, num_epochs, batch_size):
     embedding_dim = embed_mat.shape[1]
     # assign data
     data = split_data(data)
@@ -115,8 +114,6 @@ def fit_model(embed_mat, data, vocab_size, max_length=30,
     model.compile(loss='binary_crossentropy', optimizer='rmsprop',
                   metrics=['accuracy'], loss_weights=[0.8, 0.2])
     model.summary()
-    num_epochs = 10
-    batch_size = 32
     # all data inputted here must be arrays, not dataframes
     history = model.fit({'main_input': main_Itrain, 'aux_input': aux_Itrain},
                         {'main_output': train_label, 'aux_output':
@@ -127,7 +124,7 @@ def fit_model(embed_mat, data, vocab_size, max_length=30,
                                           'aux_output': test_label}),
                         epochs=num_epochs,
                         batch_size=batch_size)
-    return(model, history)
+    return(history)
 
 
 # plot graph of validation/training accuracy and loss against epochs
@@ -150,7 +147,8 @@ def run_model(data_dirs, nrows=None, embedding_dim=50, max_length=30,
     # load data
     data = load_data(proc_data_dir, nrows=nrows)
     # fit model
-    model, history = fit_model(embed_mat, data, vocab_size)
-    model.plot_graphs(model.history, 'main_output_acc')
-    model.plot_graphs(model.history, 'main_output_loss')
+    history = fit_model(embed_mat, data, vocab_size, max_length, num_epochs,
+                        batch_size)
+    plot_graphs(history, 'main_output_accuracy')
+    plot_graphs(history, 'main_output_loss')
     return(history)

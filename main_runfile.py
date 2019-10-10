@@ -33,7 +33,7 @@ if __name__ == "__main__":
     print(score, "with SMOTENN sampling")
 
     # contextualised LSTM, without generator for data
-    history = cl.run_model(data_dirs)
+    history = cl.run_model(data_dirs, num_epochs=3)
 
     # contextualised LSTM, with generator for data
     history = clg.run_model(data_dirs)
