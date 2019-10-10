@@ -27,21 +27,9 @@ auxilliary inputs are:
     number of mentions
 """
 
-# directories for files and data
-# tokenizer
-tokenizer_dir = ("C:/Users/Kumar/OneDrive - Imperial College London/"
-                 "Github repositories/Bot-Detection-in-Social-Media/"
-                 "Tokenizer")
-# pre-processed data
-proc_data_dir = ("C:/Users/Kumar/OneDrive - Imperial College London/Year 3/"
-                 "UROP/Dataset")
-# glove embedding
-glove_dir = ("C:/Users/Kumar/OneDrive - Imperial College London/Year 3/"
-             "UROP/glove.twitter.27B")
-
 
 # load glove embedding into a dictionary
-def load_glove(embedding_dim=50):
+def load_glove(glove_dir, embedding_dim=50):
     embed_index = {}
     with open(os.path.join(glove_dir, 'glove.twitter.27B.50d.txt'),
               encoding="UTF-8") as f:
@@ -54,19 +42,21 @@ def load_glove(embedding_dim=50):
 
 
 # create embedding matrix
-def embedding_matrix(tokenizer_dir, embed_index, word_index,
-                     vocab_size=30000):
+def embedding_matrix(tokenizer_dir, embed_index, vocab_size):
     embedding_dim = list(embed_index.values())[0].shape[0]
     with open(os.path.join(tokenizer_dir, 'tokenizer.pickle'),
               'rb') as handle:
         tokenizer = pickle.load(handle)
         word_index = tokenizer.word_index
-        vocab_size = 30000
         embed_mat = np.zeros((vocab_size, embedding_dim))
+        counter = 0
         for word, index in word_index.items():
             embed_vec = embed_index.get(word)
             if embed_vec is not None:
                 embed_mat[index-1] = embed_vec
+            counter += 1
+            if counter == vocab_size:
+                break
     return(embed_mat)
 
 
@@ -97,10 +87,11 @@ def split_data(data):
 
 
 # functional API keras implementation of neural network
-def fit_model(embed_mat, data, max_length=30, vocab_size=30000,
+def fit_model(embed_mat, data, vocab_size, max_length=30,
               num_epochs=10, batch_size=32):
     embedding_dim = embed_mat.shape[1]
     # assign data
+    data = split_data(data)
     main_Itrain, main_Itest, aux_Itrain, aux_Itest, train_label, \
         test_label = data
     main_input = Input(shape=(max_length,), dtype='int32', name='main_input')
@@ -136,7 +127,7 @@ def fit_model(embed_mat, data, max_length=30, vocab_size=30000,
                                           'aux_output': test_label}),
                         epochs=num_epochs,
                         batch_size=batch_size)
-    return(history)
+    return(model, history)
 
 
 # plot graph of validation/training accuracy and loss against epochs
@@ -149,5 +140,17 @@ def plot_graphs(history, string):
     plt.show()
 
 
-#plot_graphs(history, 'main_output_acc')
-#plot_graphs(history, 'main_output_loss')
+def run_model(data_dirs, nrows=None, embedding_dim=50, max_length=30,
+              num_epochs=10, batch_size=32, vocab_size=30000):
+    original_data_dir, tokenizer_dir, proc_data_dir, glove_dir = data_dirs
+    # load glove embedding
+    embed_index = load_glove(glove_dir)
+    # create embedding matrix
+    embed_mat = embedding_matrix(tokenizer_dir, embed_index, vocab_size)
+    # load data
+    data = load_data(proc_data_dir, nrows=nrows)
+    # fit model
+    model, history = fit_model(embed_mat, data, vocab_size)
+    model.plot_graphs(model.history, 'main_output_acc')
+    model.plot_graphs(model.history, 'main_output_loss')
+    return(history)

@@ -8,18 +8,6 @@ import pickle
 import numpy as np
 import csv
 
-# directories for files and data
-# original data
-original_data_dir = ("C:/Users/Kumar/OneDrive - Imperial College London/Year 3"
-                     "/UROP/Dataset/cresci-2017.csv/datasets_full.csv/")
-# tokenizer fit on training set
-tokenizer_dir = ("C:/Users/Kumar/OneDrive - Imperial College London/"
-                 "Github repositories/Bot-Detection-in-Social-Media/"
-                 "tokenisation")
-# pre-processed data
-proc_data_dir = ("C:/Users/Kumar/OneDrive - Imperial College London/Year 3/"
-                 "UROP/Dataset")
-
 
 def toToken(original_data_dir, counter=[1, 1], current_data=[0],
             break_outer=[0]):
@@ -176,7 +164,7 @@ def create_tokenizer(num_words, original_data_dir, tokenizer_dir):
     pass
 
 
-def process_data(tokenizer, max_length, length, proc_data_dir,
+def process_data(tokenizer, max_length, proc_data_dir,
                  original_data_dir):
     # write processed data to disk
     with open(os.path.join(proc_data_dir, 'processed_data.csv'), 'w',
@@ -188,15 +176,9 @@ def process_data(tokenizer, max_length, length, proc_data_dir,
                   'favorite_count', 'num_hashtags', 'num_urls', 'num_mentions',
                   'label']
         writer.writerow(header)
-        counter = 0
         while True:
             try:
                 writer.writerow(next(genPadded))
-                counter += 1
-                # only take 'length' number of rows
-                if length:
-                    if counter == length:
-                        break
             # stop when we reach the end of the file
             except StopIteration:
                 break
@@ -239,6 +221,7 @@ def run_processing(num_words, data_dirs, length=False, max_length=30,
         original_data_dir
         tokenizer_dir
         proc_data_dir
+        glove_dir (not used here)
     length - amount of data to work with, if False, work with full data
     max_length - maximum length to pad/truncate tokenized tweets to
     shrink_data - whether or not to work with reduced dataset
@@ -256,7 +239,7 @@ def run_processing(num_words, data_dirs, length=False, max_length=30,
         tokenizer = pickle.load(handle)
     # write processed data to disk
     if proc_data:
-        process_data(tokenizer, max_length, length, data_dirs[2], data_dirs[0])
+        process_data(tokenizer, max_length, data_dirs[2], data_dirs[0])
     if shuffle:
         shuffle_data(length, data_dirs[2])
     pass

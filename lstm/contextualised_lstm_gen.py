@@ -12,17 +12,6 @@ from tensorflow.keras.initializers import Constant
 
 # output dimension of lstm layer
 lstm_dim = 32
-# directories for files and data
-# tokenizer
-tokenizer_dir = ("C:/Users/Kumar/OneDrive - Imperial College London/"
-                 "Github repositories/Bot-Detection-in-Social-Media/"
-                 "Tokenizer")
-# pre-processed data
-proc_data_dir = ("C:/Users/Kumar/OneDrive - Imperial College London/Year 3/"
-                 "UROP/Dataset")
-# glove embedding
-glove_dir = ("C:/Users/Kumar/OneDrive - Imperial College London/Year 3/"
-             "UROP/glove.twitter.27B")
 
 """
 auxilliary inputs are:
@@ -36,11 +25,12 @@ auxilliary inputs are:
 
 
 class myModel:
-    def __init__(self, embed_mat, row_count, max_length=30,
+    def __init__(self, embed_mat, row_count, data_dirs, max_length=30,
                  embedding_dim=50):
         """
         embed_mat - embedding matrix for words in training set
         row_count - number of rows in training and validation set
+        data_dirs - directories for data
         max_length - maximum length of each tokenized tweet
         embedding_dim - dimension of the glove embedding
         """
@@ -49,10 +39,13 @@ class myModel:
         self.embed_mat = embed_mat
         self.row_count = row_count
         self.embedding_dim = 50
-
+        self.original_data_dir = data_dirs[0]
+        self.tokenizer_dir = data_dirs[1]
+        self.proc_data_dir = data_dirs[2]
+        self.glove_dir = data_dirs[3]
     # function to generate chunks of data from csv
 
-    def genData(self, counter=[0], batch_size=32, parent_dir=proc_data_dir):
+    def genData(self, counter=[0], batch_size=32):
         """
         Generator function passed to keras.fit_generator to train in chunks
         batch_size - size of data yielded from csv file
@@ -60,6 +53,7 @@ class myModel:
         counter - keep track of how far into the file we are
         """
         self.batch_size = batch_size
+        parent_dir = self.proc_data_dir
         with open(os.path.join(parent_dir, 'shuffled_processed_data.csv'),
                   'r') as r:
             reader = csv.reader(r)
@@ -117,6 +111,7 @@ class myModel:
         self.history = model.fit_generator(training_gen,
                                            epochs=self.epochs,
                                            steps_per_epoch=steps_per_epoch)
+        return(self.history, model)
     # plot graph of validation/training accuracy and loss against epochs
 
     def plot_graphs(self, history, string):
@@ -129,7 +124,7 @@ class myModel:
 
 
 # load glove embedding into a dictionary
-def load_glove(embedding_dim=50):
+def load_glove(glove_dir, embedding_dim=50):
     embed_index = {}
     with open(os.path.join(glove_dir, 'glove.twitter.27B.50d.txt'),
               encoding="UTF-8") as f:
@@ -151,10 +146,14 @@ def embedding_matrix(tokenizer_dir, embed_index, word_index,
         word_index = tokenizer.word_index
         vocab_size = 30000
         embed_mat = np.zeros((vocab_size, embedding_dim))
+        counter = 0
         for word, index in word_index.items():
             embed_vec = embed_index.get(word)
             if embed_vec is not None:
                 embed_mat[index-1] = embed_vec
+            counter += 1
+            if counter == vocab_size:
+                break
     return(embed_mat)
 
 
@@ -169,8 +168,19 @@ def row_counter(proc_data_dir):
         csvreader = csv.reader(csvfile)
         row_count = sum(1 for row in csvreader) - 1
     return(row_count)
-## fit the model
-#model = myModel(embed_mat, row_count)
-#model.fit()
-#model.plot_graphs(model.history, 'main_output_acc')
-#model.plot_graphs(model.history, 'main_output_loss')
+
+
+def run_model(data_dirs, nrows=None, embedding_dim=50, max_length=30,
+              num_epochs=10, batch_size=32, vocab_size=30000):
+    original_data_dir, tokenizer_dir, proc_data_dir, glove_dir = data_dirs
+    # load glove embedding
+    embed_index = load_glove(glove_dir)
+    # create embedding matrix
+    embed_mat = embedding_matrix(tokenizer_dir, embed_index, vocab_size)
+    # row count
+    row_count = row_counter(proc_data_dir)
+    model = myModel(embed_mat, row_count, data_dirs)
+    history, model = model.fit()
+    model.plot_graphs(model.history, 'main_output_acc')
+    model.plot_graphs(model.history, 'main_output_loss')
+    return(history)
