@@ -115,6 +115,12 @@ class myModel:
     # plot graph of validation/training accuracy and loss against epochs
 
     def plot_graphs(self, history, string):
+        """
+        function to plot graph of accuracy and loss of training and validation
+        data
+        history - epochs of trained model
+        string - string denoting the accuracy and loss values to be plotted
+        """
         plt.plot(history.history[string])
         plt.plot(history.history['val_'+string])
         plt.xlabel("Epochs")

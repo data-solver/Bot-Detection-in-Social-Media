@@ -124,7 +124,7 @@ def fit_model(embed_mat, data, vocab_size, max_length, num_epochs, batch_size):
                                           'aux_output': test_label}),
                         epochs=num_epochs,
                         batch_size=batch_size)
-    return(history)
+    return(history, model)
 
 
 # plot graph of validation/training accuracy and loss against epochs
@@ -147,8 +147,8 @@ def run_model(data_dirs, nrows=None, embedding_dim=50, max_length=30,
     # load data
     data = load_data(proc_data_dir, nrows=nrows)
     # fit model
-    history = fit_model(embed_mat, data, vocab_size, max_length, num_epochs,
+    history, model = fit_model(embed_mat, data, vocab_size, max_length, num_epochs,
                         batch_size)
     plot_graphs(history, 'main_output_accuracy')
     plot_graphs(history, 'main_output_loss')
-    return(history)
+    return(model)

@@ -185,8 +185,6 @@ def process_data(tokenizer, max_length, proc_data_dir,
 
 
 def shuffle_data(length, proc_data_dir):
-    if not length:
-        return
     with open(os.path.join(proc_data_dir, 'processed_data.csv'), 'r') as r, \
         open(os.path.join(proc_data_dir, 'shuffled_processed_data.csv'), 'w',
              newline='') as w:
