@@ -48,23 +48,21 @@ class sentiment_analysis:
         return score_list
     
 if __name__ == '__main__':
-    original_data_dir = ("C:/Users/Kumar/OneDrive - Imperial College London/"
-                     "Year 3/UROP/Dataset/cresci-2017.csv/"
-                     "datasets_full.csv/")
+    original_data_dir = ("./Datasets/LSTM paper data")
     test = sentiment_analysis()
-    test.get_data(original_data_dir, 100000)
-    avg_gen_sent = test.avg_sentiment(genuine=True)
-    avg_bot_sent = test.avg_sentiment(genuine=False)
+    test.get_data(original_data_dir, 100000000)
+    gen_sent = test.avg_sentiment(genuine=True)
+    bot_sent = test.avg_sentiment(genuine=False)
     
     plt.figure()
-    plt.hist(avg_gen_sent, bins=30, label='genuine tweets sentiment',
+    plt.hist(gen_sent, bins=30, label='genuine tweets sentiment',
              density=True)
-    plt.hist(avg_bot_sent, bins=30, label='bot tweets sentiment',
+    plt.hist(bot_sent, bins=30, label='bot tweets sentiment',
              density=True)
     plt.ylim((0,1))
     plt.xlabel('sentiment score')
     plt.ylabel('proportion of tweets')
-    plt.title('Histogram of sentiment score of tweets from bots and humans')
+    plt.title('Histogram of sentiment score of tweets from bots and humans, tweet level')
     plt.legend(loc='upper right', bbox_to_anchor=(1.6, 0.5))
     
     # do the same but per account rather than per tweet
