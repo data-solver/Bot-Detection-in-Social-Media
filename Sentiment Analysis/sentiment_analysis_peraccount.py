@@ -34,7 +34,10 @@ def sentiment_scores(tweet, analyser):
     
 """
 problem: entries of genuine_accounts.csv/tweets.csv is not arranged by
-         user_id, so need to check 
+         user_id - fixed
+         
+         need to create barplot with percentages of sentiment distributions for
+         bots and humans 
 """
 def concatenate_account_tweets(original_data_dir, analyser, max_accounts=None):
     """
@@ -44,63 +47,96 @@ def concatenate_account_tweets(original_data_dir, analyser, max_accounts=None):
     max_tweets - optional limit on number of accounts to process
     """
     with open(original_data_dir, 'r', encoding="Latin-1") as r:
-        reader = csv.reader(r)
-        #skip headers of csv file
-        headers = next(reader)
-        # get indices for user_id and tweets
-        user_id_index = headers.index('user_id')
-        tweet_index = headers.index('text')
-        tweet = ""
-        row = next(reader)
-        # get id of first account
-        current_user_id = row[user_id_index]
-        # empty list to store sentiment score of each account
-        account_sentiment_scores = []
-        b=[]
-        # list of tweets to be concatenated together
-        tweet_list = []
-        # count number of accounts we have gone through
-        account_num = 0
-        row_num=1
-        while True:
-            row_num+=1
-            try:
-                row = next(reader)
-                # skip blank rows
-                if row == []:
-                    continue
-            # skip NA entries
-            except csv.Error:
-                continue
-            # if we reach end of file, break
-            except StopIteration:
-                print("end of file at row", row_num)
+        df = pd.read_csv(r) 
+    # drop NA values
+    df = df.dropna(subset=['text', 'user_id'])
+    # sort by user_id column
+    df = df.sort_values(['user_id'])
+    
+    tweet_list = []
+    account_sentiment_scores = []
+    account_num = 0
+    row_num = 0
+    old_user_id = df['user_id'].iloc[row_num]
+    
+    length = len(df)
+    
+    while row_num < length:
+        current_user_id = df['user_id'].iloc[row_num]
+        if current_user_id == old_user_id:
+            tweet_list.append(df['text'].iloc[row_num])
+        else:
+            tweet = ''.join(tweet_list)
+            sent_score = sentiment_scores(tweet, analyser)
+            account_sentiment_scores.append(sent_score)
+            old_user_id = current_user_id
+            tweet_list = []
+            tweet_list.append(df['text'].iloc[row_num])
+            account_num += 1
+            if max_accounts == account_num:
                 break
-            # if the tweet is from the same account, append it to our 'big' 
-            # tweet
-            try:
-                if current_user_id == row[user_id_index]:
-                    tweet_list.append(row[tweet_index])
-                    continue
-                # if tweet is from another account, compute sentiment score 
-                # and reset tweet
-                else:
-                    tweet = ''.join(tweet_list)
-                    sent_score = sentiment_scores(tweet, analyser)
-                    account_sentiment_scores.append(sent_score)
-                    account_num += 1
-                    if max_accounts == account_num:
-                        break
-                    current_user_id = row[user_id_index]
-                    tweet_list = []
-                    tweet_list.append(row[tweet_index])
-            # dealing with last row of genuine_tweets.csv 
-            except IndexError:
-                tweet = ''.join(tweet_list)
-                sent_score = sentiment_scores(tweet, analyser)
-                account_sentiment_scores.append(sent_score)
-                break
-    return account_sentiment_scores
+        row_num += 1
+    return account_sentiment_scores     
+        
+    
+#    with open(original_data_dir, 'r', encoding="Latin-1") as r:
+#        reader = csv.reader(r)
+#        #skip headers of csv file
+#        headers = next(reader)
+#        # get indices for user_id and tweets
+#        user_id_index = headers.index('user_id')
+#        tweet_index = headers.index('text')
+#        tweet = ""
+#        row = next(reader)
+#        # get id of first account
+#        current_user_id = row[user_id_index]
+#        # empty list to store sentiment score of each account
+#        account_sentiment_scores = []
+#        b=[]
+#        # list of tweets to be concatenated together
+#        tweet_list = []
+#        # count number of accounts we have gone through
+#        account_num = 0
+#        row_num=1
+#        while True:
+#            row_num+=1
+#            try:
+#                row = next(reader)
+#                # skip blank rows
+#                if row == []:
+#                    continue
+#            # skip NA entries
+#            except csv.Error:
+#                continue
+#            # if we reach end of file, break
+#            except StopIteration:
+#                print("end of file at row", row_num)
+#                break
+#            # if the tweet is from the same account, append it to our 'big' 
+#            # tweet
+#            try:
+#                if current_user_id == row[user_id_index]:
+#                    tweet_list.append(row[tweet_index])
+#                    continue
+#                # if tweet is from another account, compute sentiment score 
+#                # and reset tweet
+#                else:
+#                    tweet = ''.join(tweet_list)
+#                    sent_score = sentiment_scores(tweet, analyser)
+#                    account_sentiment_scores.append(sent_score)
+#                    account_num += 1
+#                    if max_accounts == account_num:
+#                        break
+#                    current_user_id = row[user_id_index]
+#                    tweet_list = []
+#                    tweet_list.append(row[tweet_index])
+#            # dealing with last row of genuine_tweets.csv 
+#            except IndexError:
+#                tweet = ''.join(tweet_list)
+#                sent_score = sentiment_scores(tweet, analyser)
+#                account_sentiment_scores.append(sent_score)
+#                break
+#    return account_sentiment_scores
     
     
 if __name__ == '__main__':
@@ -138,17 +174,17 @@ if __name__ == '__main__':
     print('time taken is', t2-t1)
     
     plt.figure()
-    plt.hist(genuine_sent, bins=30, label='genuine tweets sentiment',
-             density=True)
+#    plt.hist(genuine_sent, bins=30, label='genuine tweets sentiment',
+#             density=True)
     plt.hist(bot_sent, bins=30, label='bot tweets sentiment',
              density=True)
-    plt.ylim((0,1))
+#    plt.ylim((0,1))
     plt.xlabel('sentiment score')
     plt.ylabel('proportion of tweets')
     plt.title('Histogram of sentiment score of tweets from bots and humans, account level')
     plt.legend(loc='upper right', bbox_to_anchor=(1.6, 0.5))
     
-        
+    
                 
             
             
