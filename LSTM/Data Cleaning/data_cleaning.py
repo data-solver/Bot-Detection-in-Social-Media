@@ -32,15 +32,19 @@ if __name__ == '__main__':
         print('index =', index+1, 'out of', len(data_dir_list))
         with open(os.path.join(entry[0], entry[1], 'tweets.csv'), 'r',
                   encoding="Latin-1") as r:
-            if 'genuine' in entry[0]:
+            if 'genuine' in entry[1]:
                 df = pd.read_csv(r, low_memory=False, error_bad_lines=False,
                                  names=header)
             else:
                 df = pd.read_csv(r, low_memory=False, error_bad_lines=False)
+        # list of columns we will use for analysis
+        relevant_columns = ['text', 'user_id', 'retweet_count',
+                               'reply_count', 'favorite_count', 'num_hashtags',
+                               'num_urls', 'num_mentions']
+        # remove columns we don't need
+        df = df[relevant_columns]
         # drop NA values in relevant columns of tweets csv files
-        df = df.dropna(subset=['text', 'user_id', 'retweet_count',
-                               'reply_count', 'favorite_count', 'num_hashtags', 
-                               'num_urls', 'num_mentions'])
+        df.dropna(subset=relevant_columns, inplace=True)
         # sort by user_id column
         df = df.sort_values(['user_id'])
 
@@ -56,11 +60,14 @@ if __name__ == '__main__':
                   'default_profile']] = \
         accounts[['geo_enabled', 'verified', 'protected',
                   'default_profile']].fillna(0)
-        # drop NA values in remaining relevant columns of accounts csv files
+        # list of relevant columns in users csv file
         cols = ['statuses_count', 'followers_count', 'friends_count',
                 'favourites_count', 'listed_count', 'default_profile', 
                 'geo_enabled', 'profile_use_background_image', 'verified',
                 'protected']
+        # remove columns we don't need
+        accounts = accounts[cols]
+        # drop NA values in remaining relevant columns of accounts csv files
         accounts = accounts.dropna(subset=cols)
         
         # write final dataframe to csv file
