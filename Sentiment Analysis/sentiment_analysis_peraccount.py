@@ -12,13 +12,11 @@ Repeat histogram plot done in sentiment analysis per tweet
 """
 
 import pandas as pd
-import csv
 import os
-from nltk.sentiment import vader
-import numpy as np
 import matplotlib.pyplot as plt
 import time
 import pickle
+from nltk.sentiment import vader
 
 
 def sentiment_scores(tweet, analyser):
@@ -31,16 +29,18 @@ def sentiment_scores(tweet, analyser):
         return analyser.polarity_scores(tweet)['compound']
     except AttributeError:
         return None
-    
+
+
 """
 problem: entries of genuine_accounts.csv/tweets.csv is not arranged by
          user_id - fixed
-         
          need to create barplot with percentages of sentiment distributions for
-         bots and humans 
+         bots and humans
 """
-def concatenate_account_tweets(original_data_dir, analyser, 
-                               tweetno=None, max_accounts=None):
+
+
+def conc_acc_tweets(original_data_dir, analyser, tweetno=None,
+                    max_accounts=None):
     """
     concatenates all the tweets of an account into one string
     original_data_dir - data directory of tweets
@@ -49,7 +49,7 @@ def concatenate_account_tweets(original_data_dir, analyser,
     max_accounts - optional limit on number of accounts to process
     """
     # genuine accounts csv file is missing headers
-    header = ['id', 'text', 'source', 'user_id', 'truncated', 
+    header = ['id', 'text', 'source', 'user_id', 'truncated',
               'in_reply_to_status_id', 'in_reply_to_user_id',
               'in_reply_to_screen_name', 'retweeted_status_id', 'geo', 'place',
               'contributors', 'retweet_count', 'reply_count', 'favorite_count',
@@ -62,19 +62,15 @@ def concatenate_account_tweets(original_data_dir, analyser,
             df = pd.read_csv(r, low_memory=False, error_bad_lines=False,
                              names=header)
         else:
-            df = pd.read_csv(r, low_memory=False, error_bad_lines=False) 
-    # drop NA values
-    df = df.dropna(subset=['text', 'user_id'])
+            df = pd.read_csv(r, low_memory=False, error_bad_lines=False)
     # sort by user_id column
     df = df.sort_values(['user_id'])
-    
     tweet_list = []
     account_sentiment_scores = []
     account_num = 0
     row_num = 0
     tweet_count = 0
     old_user_id = df['user_id'].iloc[row_num]
-    
     length = len(df)
     # while loop till we reach end of dataframe
     while row_num < length:
@@ -107,9 +103,9 @@ def concatenate_account_tweets(original_data_dir, analyser,
             if tweetno:
                 tweet_count = 1
         row_num += 1
-    return account_sentiment_scores     
-        
-    
+    return account_sentiment_scores
+
+
 #    with open(original_data_dir, 'r', encoding="Latin-1") as r:
 #        reader = csv.reader(r)
 #        #skip headers of csv file
@@ -161,65 +157,62 @@ def concatenate_account_tweets(original_data_dir, analyser,
 #                    current_user_id = row[user_id_index]
 #                    tweet_list = []
 #                    tweet_list.append(row[tweet_index])
-#            # dealing with last row of genuine_tweets.csv 
+#            # dealing with last row of genuine_tweets.csv
 #            except IndexError:
 #                tweet = ''.join(tweet_list)
 #                sent_score = sentiment_scores(tweet, analyser)
 #                account_sentiment_scores.append(sent_score)
 #                break
 #    return account_sentiment_scores
-    
-    
+
+
 if __name__ == '__main__':
     analyser = vader.SentimentIntensityAnalyzer()
-    max_accounts=None
+    max_accounts = None
     # compute sentiment distributions using different numbers of maximum tweets
     tweetno_list = [10, 100, 1000, None]
     gen_sent_list = []
     bot_sent_list = []
-    t1=time.time()
+    t1 = time.time()
     for tweetno in tweetno_list:
         print('tweetno =', tweetno)
         original_data_dir = ("./Datasets/LSTM paper data/social_spambots_1.csv/"
-                            "tweets.csv")
-        spambot1_sent = concatenate_account_tweets(original_data_dir, analyser,
-                                                   tweetno=tweetno,
-                                                   max_accounts=max_accounts)
+                             "tweets.csv")
+        spambot1_sent = conc_acc_tweets(original_data_dir, analyser,
+                                        tweetno=tweetno,
+                                        max_accounts=max_accounts)
         print('spambot1 done')
         original_data_dir = ("./Datasets/LSTM paper data/social_spambots_2.csv/"
-                            "tweets.csv")
-        spambot2_sent = concatenate_account_tweets(original_data_dir, analyser,
-                                                   tweetno=tweetno,
-                                                   max_accounts=max_accounts)
+                             "tweets.csv")
+        spambot2_sent = conc_acc_tweets(original_data_dir, analyser,
+                                        tweetno=tweetno,
+                                        max_accounts=max_accounts)
         print('spambot2 done')
         original_data_dir = ("./Datasets/LSTM paper data/social_spambots_3.csv/"
-                            "tweets.csv")
-        spambot3_sent = concatenate_account_tweets(original_data_dir, analyser,
-                                                   tweetno=tweetno,
-                                                   max_accounts=max_accounts)
+                             "tweets.csv")
+        spambot3_sent = conc_acc_tweets(original_data_dir, analyser,
+                                        tweetno=tweetno,
+                                        max_accounts=max_accounts)
         print('spambot3 done')
         original_data_dir = ("./Datasets/LSTM paper data/genuine_accounts.csv/"
-                            "tweets.csv")
-        genuine_sent = concatenate_account_tweets(original_data_dir, analyser,
-                                                  tweetno=tweetno,
-                                                  max_accounts=max_accounts)
+                             "tweets.csv")
+        genuine_sent = conc_acc_tweets(original_data_dir, analyser,
+                                       tweetno=tweetno,
+                                       max_accounts=max_accounts)
         print('human done')
-        bot_sent = spambot1_sent + spambot2_sent + spambot3_sent 
+        bot_sent = spambot1_sent + spambot2_sent + spambot3_sent
         gen_sent_list.append(genuine_sent)
         bot_sent_list.append(bot_sent)
-    
     # save lists to disk
     with open('./Sentiment Analysis/genuine_sent', 'wb') as fp:
         pickle.dump(gen_sent_list, fp)
-    
     with open('./Sentiment Analysis/bot_sent', 'wb') as fp:
         pickle.dump(bot_sent_list, fp)
     t2 = time.time()
     print('time taken is', t2-t1)
-    
     # plot the sentiment distribution for different tweet numbers
-    l = len(bot_sent_list)
-    for i in range(l):
+    length = len(bot_sent_list)
+    for i in range(length):
         genuine_sent = gen_sent_list[i]
         bot_sent = bot_sent_list[i]
         if tweetno_list[i]:
@@ -231,7 +224,7 @@ if __name__ == '__main__':
                  density=True)
         plt.hist(bot_sent, bins=30, label='bot tweets sentiment',
                  density=True)
-        plt.ylim((0,1))
+        plt.ylim((0, 1))
         plt.xlabel('sentiment score')
         plt.ylabel('proportion of tweets')
         if tweetno_list[i]:
@@ -240,11 +233,3 @@ if __name__ == '__main__':
             plt.title('Sentiments, account level, no tweet limit')
         plt.legend(loc='upper right', bbox_to_anchor=(1.6, 0.5))
         plt.savefig(os.path.join('./Figures', savename))
-    
-    
-                
-            
-            
-        
-    
-    

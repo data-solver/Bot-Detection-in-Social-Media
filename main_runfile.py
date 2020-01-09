@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from AdaBoost import AdaBoost
 from data_preprocessing import preprocessed_data
-from LSTM import contextualised_lstm as cl, contextualised_lstm_gen as clg
+from LSTM import cont_lstm_tweet as cl, contextualised_lstm_gen as clg
 
 def run_models(AdaBoost, SMOTENN, lstm, lstm_gen, length):
     """

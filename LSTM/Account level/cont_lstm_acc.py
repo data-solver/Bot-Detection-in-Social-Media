@@ -22,7 +22,6 @@ class acc_level:
     """
     def __init__(self, data_dir):
         self.data_dir = data_dir
-        pass
 
     def load_data(self):
         """
@@ -138,8 +137,8 @@ class acc_level:
         # compile model
         model.compile(loss='binary_crossentropy', optimizer='adam',
                       metrics=['accuracy'])
-        model.fit(X_train, y_train, epochs=50, batch_size=16)
-        score, acc = model.evaluate(X_test, y_test, verbose = 0)
+        model.fit(X_train, y_train, epochs=10, batch_size=16)
+        score, acc = model.evaluate(X_test, y_test, verbose=0)
         return acc
 
 
