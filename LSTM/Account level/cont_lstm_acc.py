@@ -8,6 +8,10 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from imblearn.combine import SMOTEENN
 from imblearn.combine import SMOTETomek
+from sklearn.ensemble import AdaBoostClassifier
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegressionCV
+from sklearn.linear_model import SGDClassifier
 
 
 class acc_level:
@@ -40,15 +44,10 @@ class acc_level:
         self.X = df1
         self.y = y
 
-    def fit_randfor(self, test_ratio=0.2, smoteenn=False, smotomek=False):
-        """
-        fit account level bot detection model
-        test ratio - proportion of data split into test set
-        smotenn - whether or not to use SMOTENN sampling
-        """
+    def prep_data(self, test_ratio, smoteenn, smotomek):
         # split data into train and test
         X_train, X_test, y_train, y_test = train_test_split(self.X, self.y,
-                                                            test_size=0.2,
+                                                            test_size=test_ratio,
                                                             random_state=4)
         # if smoteenn is true, use smoteenn sampling
         if smoteenn:
@@ -58,9 +57,59 @@ class acc_level:
         if smotomek:
             smt = SMOTETomek(random_state=1)
             X_train, y_train = smt.fit_resample(X_train, y_train)
-            
+        return X_train, X_test, y_train, y_test
+
+    def fit_randfor(self, test_ratio=0.2, smoteenn=False, smotomek=False):
+        """
+        fit random forest model
+        test ratio - proportion of data split into test set
+        smotenn - whether or not to use SMOTENN sampling
+        smotomek - whether or not to use SMOTOMEK sampling
+        """
+        # split data into train and test
+        X_train, X_test, y_train, y_test = self.prep_data(test_ratio, smoteenn,
+                                                          smotomek)
         # fit the random forest
         clf = RandomForestClassifier(random_state=1)
+        clf.fit(X_train, y_train)
+        score = clf.score(X_test, y_test)
+        return score
+
+    def fit_adaboost(self, test_ratio=0.2, smoteenn=False, smotomek=False):
+        """
+        fit AdaBoost model
+        """
+        # split data into train and test
+        X_train, X_test, y_train, y_test = self.prep_data(test_ratio, smoteenn,
+                                                          smotomek)
+        clf = AdaBoostClassifier(random_state=1)
+        clf.fit(X_train, y_train)
+        score = clf.score(X_test, y_test)
+        return score
+    
+    def fit_log_reg(self, test_ratio=0.2, smoteenn=False, smotomek=False):
+        """
+        fit logistic regression
+        """
+        # split data into train and test
+        X_train, X_test, y_train, y_test = self.prep_data(test_ratio, smoteenn,
+                                                          smotomek)
+        # standardise our data
+        sc_X = StandardScaler()
+        X_train = sc_X.fit_transform(X_train)
+        X_test = sc_X.transform(X_test)
+        # fit logistic regression
+        clf = LogisticRegressionCV(cv=10, random_state=1, penalty='l2',
+                                   refit=True).fit(X_train, y_train)
+        score = clf.score(X_test, y_test)
+        return score
+
+    def fit_sgd(self, test_ratio=0.2, smoteenn=False, smotomek=False):
+        # split data into train and test
+        X_train, X_test, y_train, y_test = self.prep_data(test_ratio, smoteenn,
+                                                          smotomek)
+        # fit sgd classifier
+        clf = SGDClassifier(max_iter=1000, tol=1e-3)
         clf.fit(X_train, y_train)
         score = clf.score(X_test, y_test)
         return score
@@ -70,4 +119,18 @@ if __name__ == '__main__':
     data_dir = r".\Datasets\LSTM paper data\Clean Data"
     model = acc_level(data_dir)
     model.load_data()
-    score = model.fit_randfor()
+    scores = {}
+    scores['Logistic Regression'] = model.fit_log_reg()
+    scores['Logistic Regression + SMOTENN'] = model.fit_log_reg(smoteenn=True)
+    scores['Logistic Regression + SMOTOMEK'] = model.fit_log_reg(smotomek=True)
+    scores['SGD Classifier'] = model.fit_sgd()
+    scores['SGD Classifier + SMOTENN'] = model.fit_sgd(smoteenn=True)
+    scores['SGD Classifier + SMOTOMEK'] = model.fit_sgd(smotomek=True)
+    scores['Random Forest'] = model.fit_randfor()
+    scores['Random Forest + SMOTENN'] = model.fit_randfor(smoteenn=True)
+    scores['Random Forest + SMOTOMEK'] = model.fit_randfor(smotomek=True)
+    scores['AdaBoost'] = model.fit_adaboost()
+    scores['AdaBoost + SMOTENN'] = model.fit_adaboost(smoteenn=True)
+    scores['AdaBoost + SMOTOMEK'] = model.fit_adaboost(smotomek=True)
+    for key, val in scores.items():
+        print(key, val)
