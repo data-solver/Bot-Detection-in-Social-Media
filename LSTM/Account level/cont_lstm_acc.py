@@ -12,6 +12,8 @@ from sklearn.ensemble import AdaBoostClassifier
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegressionCV
 from sklearn.linear_model import SGDClassifier
+from keras.models import Sequential
+from keras.layers import Dense
 
 
 class acc_level:
@@ -86,7 +88,7 @@ class acc_level:
         clf.fit(X_train, y_train)
         score = clf.score(X_test, y_test)
         return score
-    
+
     def fit_log_reg(self, test_ratio=0.2, smoteenn=False, smotomek=False):
         """
         fit logistic regression
@@ -105,6 +107,9 @@ class acc_level:
         return score
 
     def fit_sgd(self, test_ratio=0.2, smoteenn=False, smotomek=False):
+        """
+        fit stochastic gradient descent classifier
+        """
         # split data into train and test
         X_train, X_test, y_train, y_test = self.prep_data(test_ratio, smoteenn,
                                                           smotomek)
@@ -113,6 +118,29 @@ class acc_level:
         clf.fit(X_train, y_train)
         score = clf.score(X_test, y_test)
         return score
+
+    def fit_adam_nn(self, layer_sizes, test_ratio=0.2, smoteenn=False,
+                    smotomek=False):
+        """
+        fit neural network using adam optimiser, with 2 layers. The size of the
+        layers is to be specified as input
+        layer_sizes - list of layer sizes with 3 entries
+        """
+        # split data into train and test
+        X_train, X_test, y_train, y_test = self.prep_data(test_ratio, smoteenn,
+                                                          smotomek)
+        # create neural network
+        model = Sequential()
+        model.add(Dense(layer_sizes[0], input_dim=X_train.shape[1],
+                        activation='relu'))
+        model.add(Dense(layer_sizes[1], activation='relu'))
+        model.add(Dense(layer_sizes[2], activation='sigmoid'))
+        # compile model
+        model.compile(loss='binary_crossentropy', optimizer='adam',
+                      metrics=['accuracy'])
+        model.fit(X_train, y_train, epochs=50, batch_size=16)
+        score, acc = model.evaluate(X_test, y_test, verbose = 0)
+        return acc
 
 
 if __name__ == '__main__':
@@ -132,5 +160,12 @@ if __name__ == '__main__':
     scores['AdaBoost'] = model.fit_adaboost()
     scores['AdaBoost + SMOTENN'] = model.fit_adaboost(smoteenn=True)
     scores['AdaBoost + SMOTOMEK'] = model.fit_adaboost(smotomek=True)
+    layer_sizes = [500, 200, 1]
+    scores['2-layer NN (500,200,1) Relu+Adam'] = model.fit_adam_nn(layer_sizes)
+    layer_sizes = [300, 200, 1]
+    scores['2-layer NN (500,200,1) Relu+Adam + SMOTENN'] = \
+        model.fit_adam_nn(layer_sizes, smoteenn=True)
+    scores['2-layer NN (500,200,1) Relu+Adam + SMOTOMEK'] = \
+        model.fit_adam_nn(layer_sizes, smotomek=True)
     for key, val in scores.items():
         print(key, val)
