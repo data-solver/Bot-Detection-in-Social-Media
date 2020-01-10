@@ -33,7 +33,7 @@ class sentiment_analysis:
             return self.analyser.polarity_scores(tweet)
         except AttributeError:
             return None
-    
+
     def avg_sentiment(self, genuine):
         if genuine:
             data = self.genuine_tweets
@@ -68,4 +68,3 @@ if __name__ == '__main__':
               'tweet level')
     plt.legend(loc='upper right', bbox_to_anchor=(1.6, 0.5))
     plt.savefig(os.path.join('./Figures', 'sent_pertweet.png'))
-    # do the same but per account rather than per tweet

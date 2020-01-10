@@ -142,7 +142,7 @@ class acc_level:
         return acc
 
 
-if __name__ == '__main__':
+def run_model():
     data_dir = r".\Datasets\LSTM paper data\Clean Data"
     model = acc_level(data_dir)
     model.load_data()

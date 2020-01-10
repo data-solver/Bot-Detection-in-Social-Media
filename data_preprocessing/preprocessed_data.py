@@ -28,6 +28,11 @@ def toToken(original_data_dir, counter=[1, 1], current_data=[0],
             datareader = csv.reader(x.replace('\0', '') for x in csvfile)
             row = next(datareader)
             while True:
+                # if we are at the last file, break
+                if current_data[0] > 3:
+                    print("all files finished")
+                    break_outer[0] = 1
+                    break
                 try:
                     try:
                         # next row in dataset
@@ -44,11 +49,6 @@ def toToken(original_data_dir, counter=[1, 1], current_data=[0],
                     counter[1] = 1
                     print("finished file", current_data[0])
                     break
-                # if we are at the last file, break
-                if current_data[0] > 3:
-                    print("all files finished")
-                    break_outer[0] = 1
-                    break
                 try:
                     temp = ldp.tokenizer1(row[1])
                 except TypeError:
@@ -64,8 +64,8 @@ def toToken(original_data_dir, counter=[1, 1], current_data=[0],
                 tokenized_tweet = ldp.refine_token(temp)
                 counter[0] += 1
                 # report progress
-                if counter[0] // 10000 == counter[1]:
-                    print(counter[1], "lots of 10000 entries done")
+                if counter[0] // 100000 == counter[1]:
+                    print(counter[1], "lots of 100000 entries done")
                     counter[1] += 1
                 yield tokenized_tweet
 
@@ -146,8 +146,8 @@ def toPadded(tokenizer, max_length, original_data_dir, counter=[1, 1],
                 output = [sequence_padded] + aux_input + [label]
                 counter[0] += 1
                 # report progress
-                if counter[0] // 10000 == counter[1]:
-                    print(counter[1], "lots of 10000 entries done")
+                if counter[0] // 100000 == counter[1]:
+                    print(counter[1], "lots of 100000 entries done")
                     counter[1] += 1
                 yield output
 

@@ -105,70 +105,8 @@ def conc_acc_tweets(original_data_dir, analyser, tweetno=None,
         row_num += 1
     return account_sentiment_scores
 
-
-#    with open(original_data_dir, 'r', encoding="Latin-1") as r:
-#        reader = csv.reader(r)
-#        #skip headers of csv file
-#        headers = next(reader)
-#        # get indices for user_id and tweets
-#        user_id_index = headers.index('user_id')
-#        tweet_index = headers.index('text')
-#        tweet = ""
-#        row = next(reader)
-#        # get id of first account
-#        current_user_id = row[user_id_index]
-#        # empty list to store sentiment score of each account
-#        account_sentiment_scores = []
-#        b=[]
-#        # list of tweets to be concatenated together
-#        tweet_list = []
-#        # count number of accounts we have gone through
-#        account_num = 0
-#        row_num=1
-#        while True:
-#            row_num+=1
-#            try:
-#                row = next(reader)
-#                # skip blank rows
-#                if row == []:
-#                    continue
-#            # skip NA entries
-#            except csv.Error:
-#                continue
-#            # if we reach end of file, break
-#            except StopIteration:
-#                print("end of file at row", row_num)
-#                break
-#            # if the tweet is from the same account, append it to our 'big' 
-#            # tweet
-#            try:
-#                if current_user_id == row[user_id_index]:
-#                    tweet_list.append(row[tweet_index])
-#                    continue
-#                # if tweet is from another account, compute sentiment score 
-#                # and reset tweet
-#                else:
-#                    tweet = ''.join(tweet_list)
-#                    sent_score = sentiment_scores(tweet, analyser)
-#                    account_sentiment_scores.append(sent_score)
-#                    account_num += 1
-#                    if max_accounts == account_num:
-#                        break
-#                    current_user_id = row[user_id_index]
-#                    tweet_list = []
-#                    tweet_list.append(row[tweet_index])
-#            # dealing with last row of genuine_tweets.csv
-#            except IndexError:
-#                tweet = ''.join(tweet_list)
-#                sent_score = sentiment_scores(tweet, analyser)
-#                account_sentiment_scores.append(sent_score)
-#                break
-#    return account_sentiment_scores
-
-
-if __name__ == '__main__':
+def run_model(max_accounts=None):
     analyser = vader.SentimentIntensityAnalyzer()
-    max_accounts = None
     # compute sentiment distributions using different numbers of maximum tweets
     tweetno_list = [10, 100, 1000, None]
     gen_sent_list = []
