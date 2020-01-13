@@ -28,7 +28,7 @@ def run_models(ada=False, SMOTENN=False, lstm=False, sent=False):
     num_words = 50000
     preprocessed_data.run_processing(num_words=num_words, length=False,
                                      data_dirs=data_dirs, new_tokenizer=True,
-                                     proc_data=False, shuffle=True)
+                                     proc_data=True, shuffle=True)
     if ada:
         # AdaBoost without SMOTENN sampling
         AdaBoost_model = AdaBoost.AdaBoost(proc_data_dir, SMOTENN=False)

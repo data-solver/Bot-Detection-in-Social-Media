@@ -19,9 +19,10 @@ def toToken(original_data_dir, counter=[1, 1], current_data=[0],
     data_dir.append('social_spambots_3.csv/tweets.csv')
     data_dir.append('genuine_accounts.csv/tweets.csv')
     while True:
-        if break_outer[0] == 1:
+        if break_outer[0] == 1 or current_data[0] > 3:
             print("done")
             break
+        print('current data[0] is', current_data[0])
         path = os.path.join(parent_dir, data_dir[current_data[0]])
         with open(path, encoding="Latin-1") as csvfile:
             # remove NA entries
@@ -81,14 +82,19 @@ def toPadded(tokenizer, max_length, original_data_dir, counter=[1, 1],
     data_dir.append('social_spambots_3.csv/tweets.csv')
     data_dir.append('genuine_accounts.csv/tweets.csv')
     while True:
-        if break_outer[0] == 1:
+        if break_outer[0] == 1 or current_data[0] > 3:
             print("done")
             break
         path = os.path.join(parent_dir, data_dir[current_data[0]])
         with open(path, encoding="Latin-1") as csvfile:
             # remove NA entries
             datareader = csv.reader(x.replace('\0', '') for x in csvfile)
-            row = next(datareader)
+            header = next(datareader)
+            relevant_cols = ['retweet_count', 'reply_count',
+                             'favorite_count', 'num_hashtags',
+                             'num_urls', 'num_mentions']
+            indices = [header.index(relevant_cols[i]) for i in \
+                       range(len(relevant_cols))]
             while True:
                 try:
                     try:
@@ -138,8 +144,7 @@ def toPadded(tokenizer, max_length, original_data_dir, counter=[1, 1],
                     label = 0
                 # retweet_count, reply_count, favorite_count, num_hashtags,
                 # num_urls, num_mentions
-                aux_input = [row[12], row[13], row[14], row[18], row[19],
-                             row[20]]
+                aux_input = [row[indices[i]] for i in range(len(indices))]
                 # output has the form:
                 #   padded_tweet, retweet_count, reply_count, favorite_count
                 #   num_hashtags, num_urls, num_mentions, label
