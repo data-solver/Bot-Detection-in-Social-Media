@@ -21,11 +21,12 @@ text_query = '2020 US Election'
 count = 100
 
 
-try:
-# Pulling individual tweets from query
-    for tweet in api.search(q=text_query, count=count):
-# Adding to list that contains all tweets
-      tweets.append((tweet.created_at,tweet.id,tweet.text))
-except BaseException as e:
-    print('failed on_status,',str(e))
-    time.sleep(3)
+# get tweets from US election
+for tweet in tweepy.Cursor(api.search, q='#uselection', count=100, lang='en',
+                           since='2020-02-19').items():
+    additional_info = [tweet.user, tweet.tweet, tweet.created_at]
+    metadata = [tweet.retweet_count, tweet.reply_count,
+                tweet.favorite_count, tweet.num_hashtags,
+                tweet.num_urls, tweet.num_mentions]
+    interaction_info = [tweet.in_reply_to_status_id, tweet.in_reply_to_user_id]
+    tweets_list.append(additional_info + metadata)
