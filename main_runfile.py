@@ -6,7 +6,7 @@ from LSTM.Account_level import cont_lstm_acc
 from Sentiment_Analysis import sent_acc, sent_tweet
 
 
-def run_models(ada=False, SMOTENN=False, lstm=False, sent=False):
+def run_models(process=False, ada=False, SMOTENN=False, lstm=False, sent=False):
     """
     ada - Boolean, whether or not to run regular AdaBoost
     SMOTENN - Boolean, whether or not to run AdaBoost with SMOTENN
@@ -26,9 +26,10 @@ def run_models(ada=False, SMOTENN=False, lstm=False, sent=False):
     glove_dir = ("./Datasets/LSTM paper data/glove.twitter.27B")
     data_dirs = [original_data_dir, tokenizer_dir, proc_data_dir, glove_dir]
     num_words = 50000
-    preprocessed_data.run_processing(num_words=num_words, length=False,
-                                     data_dirs=data_dirs, new_tokenizer=True,
-                                     proc_data=True, shuffle=True)
+    if process:
+        preprocessed_data.run_processing(num_words=num_words, length=False,
+                                         data_dirs=data_dirs, new_tokenizer=False,
+                                         proc_data=False, shuffle=True)
     if ada:
         # AdaBoost without SMOTENN sampling
         AdaBoost_model = AdaBoost.AdaBoost(proc_data_dir, SMOTENN=False)
@@ -54,4 +55,4 @@ def run_models(ada=False, SMOTENN=False, lstm=False, sent=False):
         sent_tweet.run_model()
 
 if __name__ == '__main__':
-    run_models()
+    run_models(process=True)

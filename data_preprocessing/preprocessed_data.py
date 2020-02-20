@@ -7,6 +7,7 @@ from data_preprocessing import lstm_data_processing as ldp
 import pickle
 import numpy as np
 import csv
+import random
 
 
 def toToken(original_data_dir, counter=[1, 1], current_data=[0],
@@ -22,12 +23,13 @@ def toToken(original_data_dir, counter=[1, 1], current_data=[0],
         if break_outer[0] == 1 or current_data[0] > 3:
             print("done")
             break
-        print('current data[0] is', current_data[0])
+        print('file', current_data[0])
         path = os.path.join(parent_dir, data_dir[current_data[0]])
         with open(path, encoding="Latin-1") as csvfile:
             # remove NA entries
             datareader = csv.reader(x.replace('\0', '') for x in csvfile)
             row = next(datareader)
+            t = row.index('text')
             while True:
                 # if we are at the last file, break
                 if current_data[0] > 3:
@@ -51,9 +53,9 @@ def toToken(original_data_dir, counter=[1, 1], current_data=[0],
                     print("finished file", current_data[0])
                     break
                 try:
-                    temp = ldp.tokenizer1(row[1])
+                    temp = ldp.tokenizer1(row[t])
                 except TypeError:
-                    print("TypeError", row[1])
+                    print("TypeError", row[t])
                     continue
                 # if we are at the last file, break
                 except IndexError:
@@ -95,6 +97,9 @@ def toPadded(tokenizer, max_length, original_data_dir, counter=[1, 1],
                              'num_urls', 'num_mentions']
             indices = [header.index(relevant_cols[i]) for i in \
                        range(len(relevant_cols))]
+            # get index of tweets and user id
+            t_id = header.index('text')
+            u_id = header.index('user_id')
             while True:
                 try:
                     try:
@@ -118,9 +123,9 @@ def toPadded(tokenizer, max_length, original_data_dir, counter=[1, 1],
                     break_outer[0] = 1
                     break
                 try:
-                    sequence = tokenizer.texts_to_sequences([row[1]])
+                    sequence = tokenizer.texts_to_sequences([row[t_id]])
                 except TypeError:
-                    print("TypeError", row[1])
+                    print("TypeError", row[t_id])
                     continue
                 # if we are at the last file, break
                 except IndexError:
@@ -146,9 +151,9 @@ def toPadded(tokenizer, max_length, original_data_dir, counter=[1, 1],
                 # num_urls, num_mentions
                 aux_input = [row[indices[i]] for i in range(len(indices))]
                 # output has the form:
-                #   padded_tweet, retweet_count, reply_count, favorite_count
-                #   num_hashtags, num_urls, num_mentions, label
-                output = [sequence_padded] + aux_input + [label]
+                #   padded_tweet, user_id, retweet_count, reply_count,
+                #   favorite_count, num_hashtags, num_urls, num_mentions, label
+                output = [sequence_padded] + [row[u_id]] + aux_input + [label]
                 counter[0] += 1
                 # report progress
                 if counter[0] // 100000 == counter[1]:
@@ -177,7 +182,7 @@ def process_data(tokenizer, max_length, proc_data_dir,
         writer = csv.writer(csvfile)
         genPadded = toPadded(tokenizer, max_length, original_data_dir)
         # write the header
-        header = ['padded_tweet', 'retweet_count', 'reply_count',
+        header = ['padded_tweet', 'user_id', 'retweet_count', 'reply_count',
                   'favorite_count', 'num_hashtags', 'num_urls', 'num_mentions',
                   'label']
         writer.writerow(header)
@@ -190,30 +195,15 @@ def process_data(tokenizer, max_length, proc_data_dir,
 
 
 def shuffle_data(length, proc_data_dir):
-    with open(os.path.join(proc_data_dir, 'processed_data.csv'), 'r') as r, \
-        open(os.path.join(proc_data_dir, 'shuffled_processed_data.csv'), 'w',
-             newline='') as w:
-        writer = csv.writer(w)
-        # write the header
-        header = ['padded_tweet', 'retweet_count', 'reply_count',
-                  'favorite_count', 'num_hashtags', 'num_urls', 'num_mentions',
-                  'label']
-        writer.writerow(header)
+    with open(os.path.join(proc_data_dir, 'processed_data.csv'), 'r') as r:
         # load processed_data into dataframe (its small enough to fit in RAM)
-        df = pd.read_csv(r).to_numpy()
+        df = pd.read_csv(r)
         # shuffle the rows of this csv file
-        size = len(df)
-        indices_list = np.arange(1, size)
-        indices_shuffled = np.random.choice(indices_list,
-                                            size=len(indices_list),
-                                            replace=False)
-        counter = 0
-        for element in indices_shuffled:
-            writer.writerow(df[element])
-            counter += 1
-            if length:
-                if counter == length:
-                    break
+        groups = [df for _, df in df.groupby('user_id')]
+        random.shuffle(groups)
+        df = pd.concat(groups).reset_index(drop=True)
+        path = os.path.join(proc_data_dir, 'shuffled_processed_data.csv')
+        df.to_csv(path, index=False)
 
 
 def run_processing(num_words, data_dirs, length=False, max_length=30,

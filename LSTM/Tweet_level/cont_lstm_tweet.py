@@ -78,10 +78,16 @@ def split_data(data):
                                    random_state=4)
     main_Itrain = np.array(train['padded_tweet'].apply(ast.literal_eval).
                            values.tolist())
-    aux_Itrain = train.iloc[:, 1:7]
+    relevant_cols = ['retweet_count', 'reply_count',
+                     'favorite_count', 'num_hashtags',
+                     'num_urls', 'num_mentions']
+    header = data.columns
+    indices = [header.index(relevant_cols[i]) for i in
+               range(len(relevant_cols))]
+    aux_Itrain = train.iloc[:, indices]
     main_Itest = np.array(test['padded_tweet'].apply(ast.literal_eval).values.
                           tolist())
-    aux_Itest = test.iloc[:, 1:7]
+    aux_Itest = test.iloc[:, indices]
     return(main_Itrain, main_Itest, aux_Itrain, aux_Itest, train['label'],
            test['label'])
 
