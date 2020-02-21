@@ -60,14 +60,52 @@ def embedding_matrix(tokenizer_dir, embed_index, vocab_size):
     return(embed_mat)
 
 
-def load_data(proc_data_dir, nrows=None):
+def load_data(proc_data_dir, tweet_num=1, nrows=None):
     """
     proc_data_dir - directory of processed data
+    tweet_num - number of tweets to concatenate
     nrows - number of rows of data to load
     """
     with open(os.path.join(proc_data_dir, 'shuffled_processed_data.csv'),
               'r') as r:
         data = pd.read_csv(r, nrows=nrows)
+    # make all applicable data types numeric
+    data.loc[:, data.columns != 'padded_tweet'] = \
+        data.loc[:, data.columns != 'padded_tweet'].apply(pd.to_numeric,
+                                                          errors='coerce')
+
+    # concatenate tweets, and compute average of other features, for num_tweets
+    # number of tweets per user
+    def fn(obj):
+        return obj.loc[np.random.choice(obj.index, min(size, len(obj)-1),
+                                        replace), :]
+    if tweet_num != 1:
+        size = tweet_num        # sample size
+        replace = False  # with replacement
+        t = data.groupby('user_id', as_index=False).\
+            apply(fn).reset_index(drop=True)
+        # compute averages for auxilliary input per user id (over tweet_num
+        # tweets)
+        aux = ['retweet_count', 'reply_count',
+               'favorite_count', 'num_hashtags', 'num_urls', 'num_mentions']
+        aux_df = t.groupby('user_id')[aux].mean().reset_index()
+
+        def conc(x):
+            result = []
+            for b in x:
+                b = ast.literal_eval(b)
+                result = result + b
+            return result
+        # concatenate padded tweets
+        conc_tweet = t.groupby('user_id')['padded_tweet'].apply(conc).\
+            reset_index()
+        # labels
+        lab = t.groupby('user_id')['label'].mean().reset_index()
+        # group this information back in to one dataframe
+        final = pd.concat([conc_tweet, aux_df, lab], axis=1)
+        final.drop(['user_id'], axis=1, inplace=True)
+        return(final)
+
     return(data)
 
 
@@ -93,19 +131,23 @@ def split_data(data):
 
 
 # functional API keras implementation of neural network
-def fit_model(embed_mat, data, vocab_size, max_length, num_epochs, batch_size):
+def fit_model(embed_mat, data, vocab_size, max_length, num_epochs, batch_size,
+              tweet_num=1):
     embedding_dim = embed_mat.shape[1]
     # assign data
     data = split_data(data)
     main_Itrain, main_Itest, aux_Itrain, aux_Itest, train_label, \
         test_label = data
-    main_input = Input(shape=(max_length,), dtype='int32', name='main_input')
+    main_input = Input(shape=(tweet_num * max_length,), dtype='int32',
+                       name='main_input')
     embed_layer = Embedding(vocab_size, embedding_dim,
                             embeddings_initializer=Constant(embed_mat),
-                            input_length=max_length, trainable=False)(main_input)
+                            input_length=tweet_num*max_length,
+                            trainable=False)(main_input)
     lstm_layer = LSTM(units=lstm_dim)(embed_layer)
     # auxilliary output
-    auxilliary_output = Dense(1, activation='sigmoid', name='aux_output')(lstm_layer)
+    auxilliary_output = Dense(1, activation='sigmoid',
+                              name='aux_output')(lstm_layer)
     # auxilliary input
     input_shape = 6
     aux_input = Input((input_shape,), name='aux_input')
@@ -144,7 +186,7 @@ def plot_graphs(history, string):
 
 
 def run_model(data_dirs, nrows=None, embedding_dim=50, max_length=30,
-              num_epochs=10, batch_size=32, vocab_size=30000):
+              num_epochs=10, batch_size=32, vocab_size=30000, tweet_num=1):
     original_data_dir, tokenizer_dir, proc_data_dir, glove_dir = data_dirs
     # load glove embedding
     embed_index = load_glove(glove_dir)
@@ -154,7 +196,7 @@ def run_model(data_dirs, nrows=None, embedding_dim=50, max_length=30,
     data = load_data(proc_data_dir, nrows=nrows)
     # fit model
     history, model = fit_model(embed_mat, data, vocab_size, max_length, num_epochs,
-                        batch_size)
+                        batch_size, tweet_num)
     plot_graphs(history, 'main_output_accuracy')
     plot_graphs(history, 'main_output_loss')
     return(model)

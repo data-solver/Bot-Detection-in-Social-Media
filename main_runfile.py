@@ -55,4 +55,4 @@ def run_models(process=False, ada=False, SMOTENN=False, lstm=False, sent=False):
         sent_tweet.run_model()
 
 if __name__ == '__main__':
-    run_models(process=True)
+    run_models(process=False)
