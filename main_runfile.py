@@ -44,8 +44,7 @@ def run_models(process=False, ada=False, SMOTENN=False, lstm=False, sent=False):
         # contextualised LSTM (tweet level)
         model = cl.run_model(data_dirs, num_epochs=3, vocab_size=num_words)
         # save model
-        model.save('./Datasets/LSTM paper data/Saved models/'
-                   'contextualised_lstm_nogen.h5')
+        model.save('./Saved models/contextualised_lstm.h5')
         # account level bot detection, with out of box methods
         cont_lstm_acc.run_model()
     if sent:

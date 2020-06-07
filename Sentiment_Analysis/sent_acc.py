@@ -31,13 +31,6 @@ def sentiment_scores(tweet, analyser):
         return None
 
 
-"""
-problem: entries of genuine_accounts.csv/tweets.csv is not arranged by
-         user_id - fixed
-         need to create barplot with percentages of sentiment distributions for
-         bots and humans
-"""
-
 
 def conc_acc_tweets(original_data_dir, analyser, tweetno=None,
                     max_accounts=None):

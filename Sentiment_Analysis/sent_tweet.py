@@ -21,7 +21,7 @@ class sentiment_analysis:
         with open(os.path.join(original_data_dir, "social_spambots_1.csv/tweets.csv"),
                   'r', encoding="Latin-1") as r:
             self.bot_tweets = pd.read_csv(r, nrows=num_tweets//6)
-        with open(os.path.join(original_data_dir, "social_spambots_1.csv/tweets.csv"),
+        with open(os.path.join(original_data_dir, "social_spambots_2.csv/tweets.csv"),
                   'r', encoding="Latin-1") as r:
             self.bot_tweets.append(pd.read_csv(r, nrows=num_tweets//6))
         with open(os.path.join(original_data_dir, "social_spambots_3.csv/tweets.csv"),
@@ -49,7 +49,7 @@ class sentiment_analysis:
 
 
 if __name__ == '__main__':
-    original_data_dir = ("./Datasets/LSTM paper data")
+    original_data_dir = ("./Datasets/LSTM paper data/Clean Data")
     num_tweets = 100000000
     test = sentiment_analysis()
     test.get_data(original_data_dir, num_tweets)
