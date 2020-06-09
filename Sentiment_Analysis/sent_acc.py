@@ -41,21 +41,8 @@ def conc_acc_tweets(original_data_dir, analyser, tweetno=None,
     tweetno - maximum number of tweets per account
     max_accounts - optional limit on number of accounts to process
     """
-    # genuine accounts csv file is missing headers
-    header = ['id', 'text', 'source', 'user_id', 'truncated',
-              'in_reply_to_status_id', 'in_reply_to_user_id',
-              'in_reply_to_screen_name', 'retweeted_status_id', 'geo', 'place',
-              'contributors', 'retweet_count', 'reply_count', 'favorite_count',
-              'favorited', 'retweeted', 'possibly_sensitive', 'num_hashtags',
-              'num_urls', 'num_mentions', 'created_at', 'timestamp',
-              'crawled_at', 'updated']
-    header.append('redundant')
     with open(original_data_dir, 'r', encoding="Latin-1") as r:
-        if 'genuine' in original_data_dir:
-            df = pd.read_csv(r, low_memory=False, error_bad_lines=False,
-                             names=header)
-        else:
-            df = pd.read_csv(r, low_memory=False, error_bad_lines=False)
+        df = pd.read_csv(r, low_memory=False, error_bad_lines=False)
     # sort by user_id column
     df = df.sort_values(['user_id'])
     tweet_list = []
@@ -107,25 +94,25 @@ def run_model(max_accounts=None):
     t1 = time.time()
     for tweetno in tweetno_list:
         print('tweetno =', tweetno)
-        original_data_dir = ("./Datasets/LSTM paper data/social_spambots_1.csv/"
-                             "tweets.csv")
+        original_data_dir = ("./Datasets/LSTM paper data/Clean Data/"
+                             "social_spambots_1.csv/tweets.csv")
         spambot1_sent = conc_acc_tweets(original_data_dir, analyser,
                                         tweetno=tweetno,
                                         max_accounts=max_accounts)
         print('spambot1 done')
-        original_data_dir = ("./Datasets/LSTM paper data/social_spambots_2.csv/"
+        original_data_dir = ("./Datasets/LSTM paper data/Clean Data/social_spambots_2.csv/"
                              "tweets.csv")
         spambot2_sent = conc_acc_tweets(original_data_dir, analyser,
                                         tweetno=tweetno,
                                         max_accounts=max_accounts)
         print('spambot2 done')
-        original_data_dir = ("./Datasets/LSTM paper data/social_spambots_3.csv/"
+        original_data_dir = ("./Datasets/LSTM paper data/Clean Data/social_spambots_3.csv/"
                              "tweets.csv")
         spambot3_sent = conc_acc_tweets(original_data_dir, analyser,
                                         tweetno=tweetno,
                                         max_accounts=max_accounts)
         print('spambot3 done')
-        original_data_dir = ("./Datasets/LSTM paper data/genuine_accounts.csv/"
+        original_data_dir = ("./Datasets/LSTM paper data/Clean Data/genuine_accounts.csv/"
                              "tweets.csv")
         genuine_sent = conc_acc_tweets(original_data_dir, analyser,
                                        tweetno=tweetno,
@@ -155,12 +142,12 @@ def run_model(max_accounts=None):
                  density=True)
         plt.hist(bot_sent, bins=30, label='bot tweets sentiment',
                  density=True)
-        plt.ylim((0, 1))
+        plt.ylim((0, 4))
         plt.xlabel('sentiment score')
         plt.ylabel('proportion of tweets')
         if tweetno_list[i]:
-            plt.title('Sentiments, account level, tweetno = %i' % tweetno_list[i])
+            plt.title('Sentiment scores, number of tweets per account = %i' % tweetno_list[i])
         else:
-            plt.title('Sentiments, account level, no tweet limit')
+            plt.title('Sentiment scores, with no limit on tweets per account')
         plt.legend(loc='upper right', bbox_to_anchor=(1.6, 0.5))
         plt.savefig(os.path.join('./Figures', savename))

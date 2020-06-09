@@ -27,7 +27,6 @@ n = None
 nt = 0
 
 # hashtags to search for
-q = '#uselection OR #2020Election OR #primaries OR #USpolitics'
 q = ('#BernieSanders OR #sanders OR #bernie OR #bernieblackout OR'
      '#bernieblindness OR #biden OR #joebiden')
 # get tweets from US election

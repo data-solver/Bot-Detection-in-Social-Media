@@ -201,6 +201,6 @@ def run_model(data_dirs, nrows=None, embedding_dim=50, max_length=30,
     # fit model
     history, model = fit_model(embed_mat, data, vocab_size, max_length, num_epochs,
                         batch_size, tweet_num)
-#    plot_graphs(history, 'main_output_accuracy')
-#    plot_graphs(history, 'main_output_loss')
+    plot_graphs(history, 'main_output_accuracy')
+    plot_graphs(history, 'main_output_loss')
     return(model)
